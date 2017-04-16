@@ -1,0 +1,621 @@
+#!/usr/bin/python
+# PYTHON_ARGCOMPLETE_OK
+
+from __future__ import print_function
+import sys
+import os
+import shlex
+import struct
+import platform
+import subprocess
+import getpass
+import argparse
+import argcomplete
+from webdav.client import Client, WebDavException, NotConnection, Urn
+from distutils.util import strtobool
+from base64 import b64decode, b64encode
+
+
+def get_terminal_size():
+    current_os = platform.system()
+    tuple_xy = None
+    if current_os == 'Windows':
+        tuple_xy = _get_terminal_size_windows()
+        if tuple_xy is None:
+            tuple_xy = _get_terminal_size_input()
+    if current_os in ['Linux', 'Darwin'] or current_os.startswith('CYGWIN'):
+        tuple_xy = _get_terminal_size_linux()
+        if tuple_xy is None:
+            tuple_xy = 80, 25
+    return tuple_xy
+
+
+def _get_terminal_size_windows():
+    try:
+        from ctypes import windll, create_string_buffer
+        h = windll.kernel32.GetStdHandle(-12)
+        csbi = create_string_buffer(22)
+        res = windll.kernel32.GetConsoleScreenBufferInfo(h, csbi)
+        if res:
+            (bufx, bufy, curx, cury, wattr, left, top, right, bottom, maxx, maxy) = struct.unpack("hhhhHhhhhhh", csbi.raw)
+            sizex = right - left + 1
+            sizey = bottom - top + 1
+        return sizex, sizey
+    except:
+        pass
+
+
+def _get_terminal_size_input():
+    try:
+        cols = int(subprocess.check_call(shlex.split('tput cols')))
+        rows = int(subprocess.check_call(shlex.split('tput lines')))
+        return (cols, rows)
+    except:
+        pass
+
+
+def _get_terminal_size_linux():
+
+    def ioctl_GWINSZ(fd):
+        try:
+            import fcntl
+            import termios
+            return struct.unpack('hh', fcntl.ioctl(fd, termios.TIOCGWINSZ, '1234'))
+        except:
+            pass
+    cr = ioctl_GWINSZ(0) or ioctl_GWINSZ(1) or ioctl_GWINSZ(2)
+    if not cr:
+        try:
+            fd = os.open(os.ctermid(), os.O_RDONLY)
+            cr = ioctl_GWINSZ(fd)
+            os.close(fd)
+        except:
+            pass
+    if not cr:
+        try:
+            cr = (os.environ['LINES'], os.environ['COLUMNS'])
+        except:
+            return None
+    return int(cr[1]), int(cr[0])
+
+
+class ProgressBar:
+
+    def __init__(self):
+        self.precise = 0
+        self.total = 0
+
+    def show(self):
+        progress_line = self._progress_line()
+        import sys
+        if self.precise == 100:
+            print(progress_line, end="")
+        else:
+            print(progress_line, end="")
+            sys.stdout.write("\r")
+
+    def _progress_line(self):
+        sizex, sizey = get_terminal_size()
+        available_width = sizex
+        precise = self._get_field_precise()
+        ratio = self._get_field_ratio()
+        available_width -= len(precise) + len(ratio)
+        progress = self._get_field_progress(available_width-2)
+        return "{precise} {progress} {ratio}".format(precise=precise, progress=progress, ratio=ratio)
+
+    def _get_field_precise(self):
+        line = "{precise}%".format(precise=self.precise)
+        return "{:<4}".format(line)
+
+    def _get_field_ratio(self):
+        current = float(self.precise * self.total / 100)
+        total = float(self.total)
+        current_line = "{:.2f}".format(current)
+        total_line = "{:.2f}".format(total)
+        line = "{current}/{total}".format(current=current_line, total=total_line)
+        available = len(total_line) * 2 + 1
+        format_line = "{prefix}{value}{sufix}".format(prefix="{:>", value=available, sufix="}")
+        line = format_line.format(line)
+        return line
+
+    def _get_field_progress(self, width):
+        available_width = width - 2
+        current = int(self.precise * available_width / 100)
+        available_width -= current + 1
+        tip = ">" if not self.precise == 100 else ""
+        progress = "{arrow}{tip}{space}".format(arrow="=" * current, tip=tip, space=" " * available_width)
+        return "[{progress}]".format(progress=progress)
+
+    def callback(self, current, total):
+        if total and not self.total:
+            self.total = total
+        if not total:
+            return
+        precise = int(float(current) * 100 / total)
+        if self.precise == precise:
+            return
+        else:
+            self.precise = precise
+            self.show()
+
+setting_keys = ['webdav_hostname', 'webdav_root', 'webdav_login', 'webdav_password', 'webdav_token',
+                'proxy_hostname', 'proxy_login', 'proxy_password',
+                'cert_path', 'key_path']
+
+crypto_keys = ['webdav_password', 'webdav_token', 'proxy_password']
+
+
+def encoding(source):
+
+    if not source:
+        return ""
+    return b64encode(source.encode('utf-8'))
+
+
+def decoding(source):
+
+    if not source:
+        return ""
+    return b64decode(source).decode('utf-8')
+
+
+def import_options():
+
+    options = dict()
+    for setting_key in setting_keys:
+        options[setting_key] = os.environ.get(setting_key.upper())
+
+    for crypto_key in crypto_keys:
+        if not options[crypto_key]:
+            continue
+        options[crypto_key] = decoding(options[crypto_key])
+
+    return options
+
+
+def valid(options):
+
+    if 'webdav_hostname' not in options:
+        return False
+
+    if not options['webdav_token'] and not options['webdav_login']:
+        return False
+
+    if options['webdav_login'] and not options['webdav_password']:
+        return False
+
+    return True
+
+
+class Formatter(argparse.RawTextHelpFormatter):
+
+    def _get_default_metavar_for_optional(self, action):
+        if not action.option_strings:
+            return action.dest
+        else:
+            return ""
+
+    def _format_action_invocation(self, action):
+        if not action.option_strings:
+            default = self._get_default_metavar_for_optional(action)
+            metavar, = self._metavar_formatter(action, default)(1)
+            return metavar
+
+        else:
+            parts = []
+
+            if action.nargs == 0:
+                parts.extend(action.option_strings)
+            else:
+                default = self._get_default_metavar_for_optional(action)
+                args_string = self._format_args(action, default)
+                for option_string in action.option_strings:
+                    parts.append(option_string)
+
+                return '%s %s' % (', '.join(parts), args_string)
+
+            return ', '.join(parts)
+
+    def _metavar_formatter(self, action, default_metavar):
+        if action.metavar is not None:
+            result = action.metavar
+        else:
+            result = default_metavar
+
+        def format(tuple_size):
+            if isinstance(result, tuple):
+                return result
+            else:
+                return (result, ) * tuple_size
+        return format
+
+
+def logging_exception(exception):
+    print(exception)
+
+
+def urn_completer(prefix, **kwargs):
+
+    options = import_options()
+    try:
+        client = Client(options)
+
+        prefix_urn = Urn(prefix)
+        if prefix_urn.is_dir():
+            return (prefix+filename for filename in client.list(prefix_urn.path()))
+        else:
+            parent = prefix_urn.parent()
+            prefix_filename = prefix_urn.filename()
+            prefix_filename_length = len(prefix_filename)
+            return (prefix + filename[prefix_filename_length:] for filename in client.list(parent) if filename.startswith(prefix_filename))
+    except WebDavException:
+        pass
+
+    return tuple()
+
+if __name__ == "__main__":
+
+    epilog = """
+    Examples:
+    --------
+    $ wdc login https://webdav.server.ru
+    webdav_login: login
+    webdav_password: password
+    success
+    $ wdc login https://webdav.server.ru --token xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    not success
+    $ wdc check
+    success
+    $ wdc check file1
+    not success
+    $ wdc free
+    245234120344
+    $ wdc ls dir1
+    file1
+    ...
+    fileN
+    $ wdc mkdir dir2
+    $ wdc copy dir1/file1 -t dir2/file1
+    $ wdc move dir2/file1 -t dir2/file2
+    $ wdc download dir1/file1 -t ~/Downloads/file1
+    $ wdc download dir1/ -t ~/Downloads/dir1/
+    $ wdc upload dir2/file2 -f ~/Documents/file1
+    $ wdc upload dir2/ -f ~/Documents/
+    $ wdc publish di2/file2
+    https://yadi.sk/i/vWtTUcBucAc6k
+    $ wdc unpublish dir2/file2
+    $ wdc pull dir1/ -t ~/Documents/dir1/
+    $ wdc push dir1/ -f ~/Documents/dir1/
+    $ wdc info dir1/file1
+    {'name': 'file1', 'modified': 'Thu, 23 Oct 2014 16:16:37 GMT',
+    'size': '3460064', 'created': '2014-10-23T16:16:37Z'}
+    """
+
+    usage = """
+    wdc [-h] [-v]
+    wdc login https://webdav.server.ru [--token] [-r] [-p] [-c] [-k]
+    wdc [action] [path] [-t] [-f]
+    """
+
+    actions = "login logout check info free ls clean mkdir copy move download upload publish unpublish push pull".split()
+    actions_help = "check, info, free, ls, clean, mkdir, copy, move,\ndownload, upload, publish, unpublish, push, pull"
+
+    parser = argparse.ArgumentParser(prog='wdc', formatter_class=Formatter, epilog=epilog, usage=usage)
+    parser.add_argument("action", help=actions_help, choices=actions)
+
+    from webdav.client import __version__ as version
+    version_text = "{name} {version}".format(name="%(prog)s", version=version)
+    parser.add_argument("-v", '--version', action='version', version=version_text)
+    parser.add_argument("-r", "--root", help="example: dir1/dir2")
+    parser.add_argument("--token", help="example: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
+    parser.add_argument("-c", "--cert-path", help="example: /etc/ssl/certs/certificate.crt")
+    parser.add_argument("-k", "--key-path", help="example: /etc/ssl/private/certificate.key")
+    parser.add_argument("-p", "--proxy", help="example: http://127.0.0.1:8080")
+    parser.add_argument("path", help="example: dir1/dir2/file1", nargs='?').completer = urn_completer
+    parser.add_argument("-f", '--from-path', help="example: ~/Documents/file1")
+    parser.add_argument("-t", "--to-path", help="example for download and pull: ~/Download/file1\nexample for copy and move: dir1/dir2").completer = urn_completer
+
+    argcomplete.autocomplete(parser, exclude=("-h", "--help", "--proxy", "-p", "-r", "--root", "-c", "--cert-path", "-t", "--to-path", "-v", "--version", "-f", "--from-path", "-k", "--key-path"))
+    args = parser.parse_args()
+    action = args.action
+
+    if action == 'login':
+        env = dict()
+        if not args.path:
+            try:
+                env['webdav_hostname'] = raw_input("webdav_hostname: ")
+            except NameError:
+                env['webdav_hostname'] = input("webdav_hostname: ")
+        else:
+            env['webdav_hostname'] = args.path
+
+        if not args.token:
+            try:
+                env['webdav_login'] = raw_input("webdav_login: ")
+            except NameError:
+                env['webdav_login'] = input("webdav_login: ")
+            env['webdav_password'] = getpass.getpass("webdav_password: ")
+        else:
+            env['webdav_token'] = args.token
+
+        if args.proxy:
+            env['proxy_hostname'] = args.proxy
+            try:
+                env['proxy_login'] = raw_input("proxy_login: ")
+            except NameError:
+                env['proxy_login'] = input("proxy_login: ")
+            env['proxy_password'] = getpass.getpass("proxy_password: ")
+
+        if args.root:
+            env['webdav_root'] = args.root
+
+        if args.cert_path:
+            env['cert_path'] = args.cert_path
+
+        if args.key_path:
+            env['key_path'] = args.key_path
+
+        try:
+            client = Client(env)
+            check = client.check()
+            text = "success" if check else "not success"
+            print(text)
+
+            if check:
+                for crypto_key in crypto_keys:
+                    if crypto_key not in env:
+                        continue
+                    if not env[crypto_key]:
+                        continue
+                    env[crypto_key] = encoding(env[crypto_key])
+
+                for (key, value) in env.items():
+                    os.putenv(key.upper(), value)
+                os.system('bash')
+
+        except WebDavException as e:
+            print("not success")
+            sys.exit()
+    else:
+        options = import_options()
+        if not valid(options):
+            print("First log on webdav server using the following command: wdc login.")
+            sys.exit()
+
+        elif action == "logout":
+            os.system("exit")
+
+        elif action == 'check':
+            options = import_options()
+            try:
+                client = Client(options)
+                connection = client.check()
+                if not connection:
+                    raise NotConnection(options["webdav_hostname"])
+                check = client.check(args.path) if args.path else client.check()
+                text = "success" if check else "not success"
+                print(text)
+            except WebDavException as e:
+                logging_exception(e)
+
+        elif action == 'free':
+            options = import_options()
+            try:
+                client = Client(options)
+                connection = client.check()
+                if not connection:
+                    raise NotConnection(options["webdav_hostname"])
+                free_size = client.free()
+                print(free_size)
+            except WebDavException as e:
+                logging_exception(e)
+
+        elif action == 'ls':
+            options = import_options()
+            try:
+                client = Client(options)
+                connection = client.check()
+                if not connection:
+                    raise NotConnection(options["webdav_hostname"])
+                paths = client.list(args.path) if args.path else client.list()
+                for path in paths:
+                    print(path)
+            except WebDavException as e:
+                logging_exception(e)
+
+        elif action == 'clean':
+            if not args.path:
+                parser.print_help()
+            else:
+                options = import_options()
+                try:
+                    client = Client(options)
+                    connection = client.check()
+                    if not connection:
+                        raise NotConnection(options["webdav_hostname"])
+                    client.clean(args.path)
+                except WebDavException as e:
+                    logging_exception(e)
+
+        elif action == 'mkdir':
+            if not args.path:
+                parser.print_help()
+            else:
+                options = import_options()
+                try:
+                    client = Client(options)
+                    connection = client.check()
+                    if not connection:
+                        raise NotConnection(options["webdav_hostname"])
+                    client.mkdir(args.path)
+                except WebDavException as e:
+                    logging_exception(e)
+
+        elif action == 'copy':
+            if not args.path or not args.to_path:
+                parser.print_help()
+            else:
+                options = import_options()
+                try:
+                    client = Client(options)
+                    connection = client.check()
+                    if not connection:
+                        raise NotConnection(options["webdav_hostname"])
+                    client.copy(remote_path_from=args.path, remote_path_to=args.to_path)
+                except WebDavException as e:
+                    logging_exception(e)
+
+        elif action == 'move':
+            if not args.path or not args.to_path:
+                parser.print_help()
+            else:
+                options = import_options()
+                try:
+                    client = Client(options)
+                    connection = client.check()
+                    if not connection:
+                        raise NotConnection(options["webdav_hostname"])
+                    client.move(remote_path_from=args.path, remote_path_to=args.to_path)
+                except WebDavException as e:
+                    logging_exception(e)
+
+        elif action == 'download':
+            if not args.path or not args.to_path:
+                parser.print_help()
+            else:
+                options = import_options()
+                progress_bar = ProgressBar()
+
+                def download_progress(download_t, download_d, upload_t, upload_d):
+                    progress_bar.callback(current=download_d, total=download_t)
+
+                try:
+                    client = Client(options)
+                    connection = client.check()
+                    if not connection:
+                        raise NotConnection(options["webdav_hostname"])
+                    if not os.path.exists(path=args.to_path):
+                        client.download(remote_path=args.path, local_path=args.to_path, progress=download_progress)
+                        print("\n")
+                    else:
+                        try:
+                            choice = raw_input("Local path exists, do you want to overwrite it? [Y/n] ")
+                        except NameError:
+                            choice = input("Local path exists, do you want to overwrite it? [Y/n] ")
+                        try:
+                            yes = strtobool(choice.lower())
+                            if yes:
+                                client.download(remote_path=args.path, local_path=args.to_path, progress=download_progress)
+                                print("\n")
+                        except ValueError:
+                            print("Incorrect answer")
+                except WebDavException as e:
+                    logging_exception(e)
+
+        elif action == 'upload':
+            if not args.path or not args.from_path:
+                parser.print_help()
+            else:
+                options = import_options()
+                progress_bar = ProgressBar()
+
+                def upload_progress(download_t, download_d, upload_t, upload_d):
+                    progress_bar.callback(current=upload_d, total=upload_t)
+
+                try:
+                    client = Client(options)
+                    connection = client.check()
+                    if not connection:
+                        raise NotConnection(options["webdav_hostname"])
+                    if not client.check(remote_path=args.path):
+                        client.upload(remote_path=args.path, local_path=args.from_path, progress=upload_progress)
+                        print("\n")
+                    else:
+                        try:
+                            choice = raw_input("Remote resource exists, do you want to overwrite it? [Y/n] ")
+                        except NameError:
+                            choice = input("Remote resource exists, do you want to overwrite it? [Y/n] ")
+                        try:
+                            yes = strtobool(choice.lower())
+                            if yes:
+                                client.upload(remote_path=args.path, local_path=args.from_path, progress=upload_progress)
+                                print("\n")
+                        except ValueError:
+                            print("Incorrect answer")
+                except WebDavException as e:
+                    logging_exception(e)
+
+        elif action == 'publish':
+            if not args.path:
+                parser.print_help()
+            else:
+                options = import_options()
+                try:
+                    client = Client(options)
+                    connection = client.check()
+                    if not connection:
+                        raise NotConnection(options["webdav_hostname"])
+                    link = client.publish(args.path)
+                    print(link)
+                except WebDavException as e:
+                    logging_exception(e)
+
+        elif action == 'unpublish':
+            if not args.path:
+                parser.print_help()
+            else:
+                options = import_options()
+                try:
+                    client = Client(options)
+                    connection = client.check()
+                    if not connection:
+                        raise NotConnection(options["webdav_hostname"])
+                    client.unpublish(args.path)
+                except WebDavException as e:
+                    logging_exception(e)
+
+        elif action == 'push':
+            if not args.path or not args.from_path:
+                parser.print_help()
+            else:
+                options = import_options()
+                try:
+                    client = Client(options)
+                    connection = client.check()
+                    if not connection:
+                        raise NotConnection(options["webdav_hostname"])
+                    client.push(remote_directory=args.path, local_directory=args.from_path)
+                except WebDavException as e:
+                    logging_exception(e)
+
+        elif action == 'pull':
+            if not args.path or not args.to_path:
+                parser.print_help()
+            else:
+                options = import_options()
+                try:
+                    client = Client(options)
+                    connection = client.check()
+                    if not connection:
+                        raise NotConnection(options["webdav_hostname"])
+                    client.pull(remote_directory=args.path, local_directory=args.to_path)
+                except WebDavException as e:
+                    logging_exception(e)
+
+        elif action == 'info':
+            if not args.path:
+                parser.print_help()
+            else:
+                options = import_options()
+                try:
+                    client = Client(options)
+                    connection = client.check()
+                    if not connection:
+                        raise NotConnection(options["webdav_hostname"])
+                    info = client.info(args.path)
+                    print(info)
+                except WebDavException as e:
+                    logging_exception(e)
+
+        else:
+            parser.print_help()
