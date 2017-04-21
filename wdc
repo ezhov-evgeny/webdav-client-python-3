@@ -11,7 +11,7 @@ import subprocess
 import getpass
 import argparse
 import argcomplete
-from webdav.client import Client, WebDavException, NotConnection, Urn
+from webdav2.client import Client, WebDavException, NotConnection, Urn
 from distutils.util import strtobool
 from base64 import b64decode, b64encode
 
