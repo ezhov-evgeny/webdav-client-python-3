@@ -51,7 +51,7 @@ setup(
     scripts=['wdc'],
     tests_require=['pytest', 'pyhamcrest', 'junit-xml', 'pytest-allure-adaptor'],
     cmdclass={'install': Install, 'test': Test},
-    description='WebDAV client, based on original package https://github.com/designerror/webdav-client-python',
+    description='WebDAV client, based on original package https://github.com/designerror/webdav-client-python but uses requests instead of PyCURL',
     long_description=open('README.rst').read(),
     author='Yuriy Homyakov',
     author_email='yuriy.homyakov@gmail.com',

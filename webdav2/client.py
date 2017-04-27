@@ -4,12 +4,10 @@ import functools
 import logging
 import os
 import shutil
-import threading
 from io import BytesIO
 from re import sub
 
 import requests
-import pycurl
 import lxml.etree as etree
 
 from webdav2.connection import *
@@ -34,19 +32,6 @@ def listdir(directory):
             filename = "{filename}{separate}".format(filename=filename, separate=os.path.sep)
         file_names.append(filename)
     return file_names
-
-
-def add_options(request, options):
-
-    for (key, value) in options.items():
-        if value is None:
-            continue
-        try:
-            request.setopt(pycurl.__dict__[key], value)
-        except TypeError:
-            raise OptionNotValid(key, value)
-        except pycurl.error:
-            raise OptionNotValid(key, value)
 
 
 def get_options(type, from_options):
@@ -138,64 +123,11 @@ class Client(object):
 
         self.webdav = WebDAVSettings(webdav_options)
         self.proxy = ProxySettings(proxy_options)
-        # pycurl.global_init(pycurl.GLOBAL_DEFAULT)
         self.default_options = {}
-
-    # def __del__(self):
-    #     pycurl.global_cleanup()
 
     def valid(self):
         return True if self.webdav.valid() and self.proxy.valid() else False
 
-    # def Request(self, options=None):
-
-    #     curl = pycurl.Curl()
-
-    #     self.default_options.update({
-    #         'URL': self.webdav.hostname,
-    #         'NOBODY': 1,
-    #         'SSLVERSION': pycurl.SSLVERSION_TLSv1,
-    #     })
-
-    #     if not self.webdav.token:
-    #         server_token = '{login}:{password}'.format(login=self.webdav.login, password=self.webdav.password)
-    #         self.default_options.update({
-    #             'USERPWD': server_token,
-    #         })
-
-    #     if self.proxy.valid():
-    #         if self.proxy.hostname:
-    #             self.default_options['PROXY'] = self.proxy.hostname
-
-    #         if self.proxy.login:
-    #             if not self.proxy.password:
-    #                 self.default_options['PROXYUSERNAME'] = self.proxy.login
-    #             else:
-    #                 proxy_token = '{login}:{password}'.format(login=self.proxy.login, password=self.proxy.password)
-    #                 self.default_options['PROXYUSERPWD'] = proxy_token
-
-    #     if self.webdav.cert_path:
-    #         self.default_options['SSLCERT'] = self.webdav.cert_path
-
-    #     if self.webdav.key_path:
-    #         self.default_options['SSLKEY'] = self.webdav.key_path
-
-    #     if self.webdav.recv_speed:
-    #         self.default_options['MAX_RECV_SPEED_LARGE'] = self.webdav.recv_speed
-
-    #     if self.webdav.send_speed:
-    #         self.default_options['MAX_SEND_SPEED_LARGE'] = self.webdav.send_speed
-
-    #     if self.webdav.verbose:
-    #         self.default_options['VERBOSE'] = self.webdav.verbose
-
-    #     if self.default_options:
-    #         add_options(curl, self.default_options)
-
-    #     if options:
-    #         add_options(curl, options)
-
-    #     return curl
 
     @wrap_connection_error
     def list(self, remote_path=root):
@@ -635,102 +567,6 @@ class Client(object):
             headers=self.get_header('clean'),
         )
         # TODO: check response status
-
-    # def publish(self, remote_path):
-
-    #     def parse(response):
-
-    #         try:
-    #             response_str = response.content
-    #             tree = etree.fromstring(response_str)
-    #             result = tree.xpath("//*[local-name() = 'public_url']")
-    #             public_url = result[0]
-    #             return public_url.text
-    #         except IndexError:
-    #             raise MethodNotSupported(name="publish", server=self.webdav.hostname)
-    #         except etree.XMLSyntaxError:
-    #             return ""
-
-    #     def data(for_server):
-
-    #         root_node = etree.Element("propertyupdate", xmlns="DAV:")
-    #         set_node = etree.SubElement(root_node, "set")
-    #         prop_node = etree.SubElement(set_node, "prop")
-    #         xmlns = Client.meta_xmlns.get(for_server, "")
-    #         public_url = etree.SubElement(prop_node, "public_url", xmlns=xmlns)
-    #         public_url.text = "true"
-    #         tree = etree.ElementTree(root_node)
-
-    #         buff = BytesIO()
-    #         tree.write(buff)
-
-    #         return buff.getvalue()
-
-    #     try:
-    #         urn = Urn(remote_path)
-
-    #         if not self.check(urn.path()):
-    #             raise RemoteResourceNotFound(urn.path())
-
-    #         response = BytesIO()
-
-    #         url = {'hostname': self.webdav.hostname, 'root': self.webdav.root, 'path': urn.quote()}
-    #         options = {
-    #             'URL': "{hostname}{root}{path}".format(**url),
-    #             'CUSTOMREQUEST': Client.requests['publish'],
-    #             'HTTPHEADER': self.get_header('publish'),
-    #             'POSTFIELDS': data(for_server=self.webdav.hostname),
-    #             'WRITEDATA': response,
-    #             'NOBODY': 0
-    #         }
-
-    #         request = self.Request(options=options)
-
-    #         request.perform()
-    #         request.close()
-
-    #         return parse(response)
-
-    #     except pycurl.error:
-    #         raise NotConnection(self.webdav.hostname)
-
-    # def unpublish(self, remote_path):
-
-    #     def data(for_server):
-
-    #         root = etree.Element("propertyupdate", xmlns="DAV:")
-    #         remove = etree.SubElement(root, "remove")
-    #         prop = etree.SubElement(remove, "prop")
-    #         xmlns = Client.meta_xmlns.get(for_server, "")
-    #         etree.SubElement(prop, "public_url", xmlns=xmlns)
-    #         tree = etree.ElementTree(root)
-
-    #         buff = BytesIO()
-    #         tree.write(buff)
-
-    #         return buff.getvalue()
-
-    #     try:
-    #         urn = Urn(remote_path)
-
-    #         if not self.check(urn.path()):
-    #             raise RemoteResourceNotFound(urn.path())
-
-    #         url = {'hostname': self.webdav.hostname, 'root': self.webdav.root, 'path': urn.quote()}
-    #         options = {
-    #             'URL': "{hostname}{root}{path}".format(**url),
-    #             'CUSTOMREQUEST': Client.requests['unpublish'],
-    #             'HTTPHEADER': self.get_header('unpublish'),
-    #             'POSTFIELDS': data(for_server=self.webdav.hostname)
-    #         }
-
-    #         request = self.Request(options=options)
-
-    #         request.perform()
-    #         request.close()
-
-    #     except pycurl.error:
-    #         raise NotConnection(self.webdav.hostname)
 
     @wrap_connection_error
     def info(self, remote_path):
