@@ -371,7 +371,7 @@ class Client(object):
         if buff.tell() == 0:
             data = buff.read()
         else:
-            data = buff 
+            data = buff
         response = requests.request(
             'PUT',
             options["URL"],
@@ -388,7 +388,7 @@ class Client(object):
         if os.path.isdir(local_path):
             self.upload_directory(local_path=local_path, remote_path=remote_path, progress=progress)
         else:
-            self.upload_file(local_path=local_path, remote_path=remote_path, progress=progress)
+            self.upload_file(local_path=local_path, remote_path=remote_path)
 
     def upload_directory(self, remote_path, local_path, progress=None):
 
@@ -414,7 +414,7 @@ class Client(object):
             self.upload(local_path=_local_path, remote_path=_remote_path, progress=progress)
 
     @wrap_connection_error
-    def upload_file(self, remote_path, local_path, progress=None):
+    def upload_file(self, remote_path, local_path):
 
         if not os.path.exists(local_path):
             raise LocalResourceNotFound(local_path)
@@ -431,36 +431,21 @@ class Client(object):
             raise RemoteParentNotFound(urn.path())
 
         with open(local_path, "rb") as local_file:
-
             url = {'hostname': self.webdav.hostname, 'root': self.webdav.root, 'path': urn.quote()}
-            options = {
-                'URL': "{hostname}{root}{path}".format(**url),
-                'HTTPHEADER': self.get_header('upload_file'),
-                'UPLOAD': 1,
-                'READFUNCTION': local_file.read,
-                # 'NOPROGRESS': 0 if progress else 1
-            }
-
-            # if progress:
-            #    options["PROGRESSFUNCTION"] = progress
 
             file_size = os.path.getsize(local_path)
             if file_size > self.large_size:
-                options['INFILESIZE_LARGE'] = file_size
-            else:
-                options['INFILESIZE'] = file_size
+                raise ResourceTooBig(path=local_path, size=file_size)
 
             response = requests.request(
-                'PUT',
-                options["URL"],
+                method='PUT',
+                url="{hostname}{root}{path}".format(**url),
                 auth=(self.webdav.login, self.webdav.password),
                 headers=self.get_header('upload_file'),
-                data=buff
+                data=local_file
             )
-            if request.status_code == 507:
+            if response.status_code == 507:
                 raise NotEnoughSpace()
-
-            # request.close()
 
     def upload_sync(self, remote_path, local_path, callback=None):
 

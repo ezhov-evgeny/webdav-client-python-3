@@ -13,7 +13,8 @@ class OptionNotValid(NotValid):
         self.ns = ns
 
     def __str__(self):
-        return "Option ({ns}{name}={value}) have invalid name or value".format(ns=self.ns, name=self.name, value=self.value)
+        return "Option ({ns}{name}={value}) have invalid name or value".format(ns=self.ns, name=self.name,
+                                                                               value=self.value)
 
 
 class CertificateNotValid(NotValid):
@@ -46,6 +47,19 @@ class RemoteParentNotFound(NotFound):
 
     def __str__(self):
         return "Remote parent for: {path} not found".format(path=self.path)
+
+
+class ResourceTooBig(WebDavException):
+    def __init__(self, path, size, max_size):
+        self.path = path
+        self.size = size
+        self.max_size = max_size
+
+    def __str__(self):
+        return "Resource {path} is too big, it should be less then {max_size} but actually: {size}".format(
+            path=self.path,
+            max_size=self.max_size,
+            size=self.size)
 
 
 class MethodNotSupported(WebDavException):
