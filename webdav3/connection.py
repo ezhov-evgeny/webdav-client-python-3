@@ -1,7 +1,7 @@
 from os.path import exists
 
-from webdav2.exceptions import *
-from webdav2.urn import Urn
+from webdav3.exceptions import *
+from webdav3.urn import Urn
 
 
 class ConnectionSettings:

@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import sys
+
 from setuptools import setup, find_packages
-
-from setuptools.command.test import test as TestCommand
 from setuptools.command.install import install as InstallCommand
+from setuptools.command.test import test as TestCommand
 
-version = "0.1"
+version = "0.2"
 requirements = "libxml2-dev libxslt-dev python-dev"
 
 
@@ -43,7 +43,7 @@ class Test(TestCommand):
         sys.exit(errno)
 
 setup(
-    name='webdavclient2',
+    name='webdavclient3',
     version=version,
     packages=find_packages(),
     requires=['python (>= 2.7.6)'],
@@ -53,9 +53,9 @@ setup(
     cmdclass={'install': Install, 'test': Test},
     description='WebDAV client, based on original package https://github.com/designerror/webdav-client-python but uses requests instead of PyCURL',
     long_description=open('README.rst').read(),
-    author='Yuriy Homyakov',
-    author_email='yuriy.homyakov@gmail.com',
-    url='https://github.com/appetito/webdav-client-python-2',
+    author='Evgeny Ezhov',
+    author_email='ezhov.evgeny@gmail.com',
+    url='https://github.com/ezhov-evgeny/webdav-client-python-2',
     license='MIT License',
     keywords='webdav, client, python, module, library, packet, Yandex.Disk, Dropbox, Google Disk, Box, 4shared',
     classifiers=[

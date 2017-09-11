@@ -1,4 +1,4 @@
-webdavclient2
+webdavclient3
 ============
 
 Based on https://github.com/designerror/webdav-client-python

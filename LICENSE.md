@@ -1,4 +1,4 @@
-COPYRIGHT AND PERMISSION NOTICE
+python setup.py register -r pypitestCOPYRIGHT AND PERMISSION NOTICE
 
 Copyright (c) 2016, The WDC Project, and many
 contributors, see the THANKS file.

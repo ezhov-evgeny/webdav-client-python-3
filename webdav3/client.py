@@ -11,9 +11,9 @@ from re import sub
 import lxml.etree as etree
 import requests
 
-from webdav2.connection import *
-from webdav2.exceptions import *
-from webdav2.urn import Urn
+from webdav3.connection import *
+from webdav3.exceptions import *
+from webdav3.urn import Urn
 
 try:
     from urllib.parse import unquote

@@ -2,18 +2,21 @@
 # PYTHON_ARGCOMPLETE_OK
 
 from __future__ import print_function
-import sys
+
+import argparse
+import getpass
 import os
+import platform
 import shlex
 import struct
-import platform
 import subprocess
-import getpass
-import argparse
-import argcomplete
-from webdav2.client import Client, WebDavException, NotConnection, Urn
-from distutils.util import strtobool
+import sys
 from base64 import b64decode, b64encode
+from distutils.util import strtobool
+
+import argcomplete
+
+from webdav3.client import Client, WebDavException, NotConnection, Urn
 
 
 def get_terminal_size():

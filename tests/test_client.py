@@ -4,7 +4,7 @@ from io import BytesIO, StringIO
 from os import path
 from unittest import TestCase
 
-from webdav2.client import Client
+from webdav3.client import Client
 
 
 class ClientTestCase(TestCase):
