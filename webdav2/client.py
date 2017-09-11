@@ -4,11 +4,12 @@ import functools
 import logging
 import os
 import shutil
+import threading
 from io import BytesIO
 from re import sub
 
-import requests
 import lxml.etree as etree
+import requests
 
 from webdav2.connection import *
 from webdav2.exceptions import *
@@ -19,12 +20,16 @@ try:
 except ImportError:
     from urllib import unquote
 
-__version__ = "0.1"
+__version__ = "0.2"
 log = logging.getLogger(__name__)
 
 
 def listdir(directory):
+    """Returns list of nested files and directories for local directory by path
 
+    :param directory: absolute or relative path to local directory
+    :return: list nested of file or directory names
+    """
     file_names = list()
     for filename in os.listdir(directory):
         file_path = os.path.join(directory, filename)
@@ -34,12 +39,18 @@ def listdir(directory):
     return file_names
 
 
-def get_options(type, from_options):
+def get_options(option_type, from_options):
+    """Extract options for specified option type from all options
 
+    :param option_type: the object of specified type of options
+    :param from_options: all options dictionary
+    :return: the dictionary of options for specified type, each option can be filled by value from all options
+             dictionary or blank in case the option for specified type is not exist in all options dictionary
+    """
     _options = dict()
 
-    for key in type.keys:
-        key_with_prefix = "{prefix}{key}".format(prefix=type.prefix, key=key)
+    for key in option_type.keys:
+        key_with_prefix = "{prefix}{key}".format(prefix=option_type.prefix, key=key)
         if key not in from_options and key_with_prefix not in from_options:
             _options[key] = ""
         elif key in from_options:
@@ -60,14 +71,20 @@ def wrap_connection_error(fn):
             raise NotConnection(self.webdav.hostname)
         else:
             return res
+
     return _wrapper
 
 
 class Client(object):
-
+    """The client for WebDAV servers provides an ability to control files on remote WebDAV server.
+    """
+    # path to root directory of WebDAV
     root = '/'
+
+    # Max size of file for uploading
     large_size = 2 * 1024 * 1024 * 1024
 
+    # HTTP headers for different actions
     http_header = {
         'list': ["Accept: */*", "Depth: 1"],
         'free': ["Accept: */*", "Depth: 0", "Content-Type: text/xml"],
@@ -81,13 +98,17 @@ class Client(object):
         'set_metadata': ["Accept: */*", "Depth: 1", "Content-Type: application/x-www-form-urlencoded"]
     }
 
-    def get_header(self, method):
+    def get_header(self, action):
+        """Returns HTTP headers of specified WebDAV actions
 
-        if method in Client.http_header:
+        :param action: the identifier of action
+        :return: the dictionary of headers for specified action
+        """
+        if action in Client.http_header:
             try:
-                header = Client.http_header[method].copy()
+                header = Client.http_header[action].copy()
             except AttributeError:
-                header = Client.http_header[method][:]
+                header = Client.http_header[action][:]
         else:
             header = list()
 
@@ -96,7 +117,44 @@ class Client(object):
             header.append(webdav_token)
         return dict([map(lambda s: s.strip(), i.split(':')) for i in header])
 
+    def get_url(self, path):
+        """Generates url by uri path.
+
+        :param path: uri path.
+        :return: the url string.
+        """
+        url = {'hostname': self.webdav.hostname, 'root': self.webdav.root, 'path': path}
+        return "{hostname}{root}{path}".format(**url)
+
+    def execute_request(self, action, path, data=None):
+        """Generate request to WebDAV server for specified action and path and execute it.
+
+        :param action: the action for WebDAV server which should be executed.
+        :param path: the path to resource for action
+        :param data: (optional) Dictionary or list of tuples ``[(key, value)]`` (will be form-encoded), bytes,
+                     or file-like object to send in the body of the :class:`Request`.
+        :return: HTTP response of request.
+        """
+        response = requests.request(
+            method=Client.requests[action],
+            url=self.get_url(path),
+            auth=(self.webdav.login, self.webdav.password),
+            headers=self.get_header(action),
+            data=data
+        )
+        if response.status_code == 507:
+            raise NotEnoughSpace()
+        if response.status_code >= 400:
+            raise ResponseErrorCode(url=self.get_url(path), code=response.status_code, message=response.content)
+        return response
+
+    # mapping of actions to WebDAV methods
     requests = {
+        'download': "GET",
+        'download_to': "GET",
+        'download_file': "GET",
+        'upload_from': "PUT",
+        'upload_file': "PUT",
         'copy': "COPY",
         'move': "MOVE",
         'mkdir': "MKCOL",
@@ -117,25 +175,59 @@ class Client(object):
     }
 
     def __init__(self, options):
+        """Constructor of WebDAV client
 
-        webdav_options = get_options(type=WebDAVSettings, from_options=options)
-        proxy_options = get_options(type=ProxySettings, from_options=options)
+        :param options: the dictionary of connection options to WebDAV can include proxy server options.
+            WebDev settings:
+            `webdav_hostname`: url for WebDAV server should contain protocol and ip address or domain name.
+                               Example: `https://webdav.server.com`.
+            `webdav_login`: (optional) login name for WebDAV server can be empty in case using of token auth.
+            `webdav_password`: (optional) password for WebDAV server can be empty in case using of token auth.
+            `webdav_token': (optional) token for WebDAV server can be empty in case using of login/password auth.
+            `webdav_root`: (optional) root directory of WebDAV server. Defaults is `/`.
+            `webdav_cert_path`: (optional) path to certificate.
+            `webdav_key_path`: (optional) path to private key.
+            `webdav_recv_speed`: (optional) rate limit data download speed in Bytes per second.
+                                 Defaults to unlimited speed.
+            `webdav_send_speed`: (optional) rate limit data upload speed in Bytes per second.
+                                 Defaults to unlimited speed.
+            `webdav_verbose`: (optional) set verbose mode on.off. By default verbose mode is off.
+            Proxy settings (optional):
+             `proxy_hostname`: url to proxy server should contain protocol and ip address or domain name and if needed
+                               port. Example: `https://proxy.server.com:8383`.
+             `proxy_login`: login name for proxy server.
+             `proxy_password`: password for proxy server.
+        """
+        webdav_options = get_options(option_type=WebDAVSettings, from_options=options)
+        proxy_options = get_options(option_type=ProxySettings, from_options=options)
 
         self.webdav = WebDAVSettings(webdav_options)
         self.proxy = ProxySettings(proxy_options)
         self.default_options = {}
 
     def valid(self):
-        return True if self.webdav.valid() and self.proxy.valid() else False
+        """Validates of WebDAV and proxy settings.
 
+        :return: True in case settings are valid and False otherwise.
+        """
+        return True if self.webdav.valid() and self.proxy.valid() else False
 
     @wrap_connection_error
     def list(self, remote_path=root):
+        """Returns list of nested files and directories for remote WebDAV directory by path.
 
-        def parse(response):
+        :param remote_path: path to remote directory.
+        :return: list of nested file or directory names.
+        """
 
+        def parse(list_response):
+            """Parses of response from WebDAV server and extract file and directory names.
+
+            :param list_response: HTTP response from WebDAV server for getting list of files by remote path.
+            :return: list of extracted file or directory names.
+            """
             try:
-                response_str = response.content
+                response_str = list_response.content
                 tree = etree.fromstring(response_str)
                 hrees = [unquote(hree.text) for hree in tree.findall(".//{DAV:}href")]
                 return [Urn(hree) for hree in hrees]
@@ -148,21 +240,7 @@ class Client(object):
             if not self.check(directory_urn.path()):
                 raise RemoteResourceNotFound(directory_urn.path())
 
-        url = {'hostname': self.webdav.hostname, 'root': self.webdav.root, 'path': directory_urn.quote()}
-        options = {
-            'URL': "{hostname}{root}{path}".format(**url),
-            'CUSTOMREQUEST': Client.requests['list'],
-            'HTTPHEADER': self.get_header('list'),
-            'NOBODY': 0
-        }
-
-        response = requests.request(
-            options["CUSTOMREQUEST"],
-            options["URL"],
-            auth=(self.webdav.login, self.webdav.password),
-            headers=self.get_header('list')
-        )
-
+        response = self.execute_request(action='list', path=directory_urn.quote())
         urns = parse(response)
 
         path = "{root}{path}".format(root=self.webdav.root, path=directory_urn.path())
@@ -170,11 +248,19 @@ class Client(object):
 
     @wrap_connection_error
     def free(self):
+        """Returns an amount of free space on remote WebDAV server.
 
-        def parse(response):
+        :return: an amount of free space in bytes.
+        """
 
+        def parse(free_response):
+            """Parses of response from WebDAV server and extract na amount of free space.
+
+            :param free_response: HTTP response from WebDAV server for getting free space.
+            :return: an amount of free space in bytes.
+            """
             try:
-                response_str = response.content
+                response_str = free_response.content
                 tree = etree.fromstring(response_str)
                 node = tree.find('.//{DAV:}quota-available-bytes')
                 if node is not None:
@@ -187,7 +273,6 @@ class Client(object):
                 return str()
 
         def data():
-
             root = etree.Element("propfind", xmlns="DAV:")
             prop = etree.SubElement(root, "prop")
             etree.SubElement(prop, "quota-available-bytes")
@@ -197,40 +282,22 @@ class Client(object):
             tree.write(buff)
             return buff.getvalue()
 
-        options = {
-            'CUSTOMREQUEST': Client.requests['free'],
-            'HTTPHEADER': self.get_header('free'),
-            'POSTFIELDS': data(),
-            'NOBODY': 0
-        }
-
-        response = requests.request(
-            options["CUSTOMREQUEST"],
-            options["URL"],
-            data=data(),
-            auth=(self.webdav.login, self.webdav.password),
-            headers=self.get_header('free')
-        )
+        response = self.execute_request(action='free', path='', data=data())
 
         return parse(response)
 
     @wrap_connection_error
     def check(self, remote_path=root):
+        """Checks an existence of remote resource on WebDAV server by remote path
+
+        :param remote_path: (optional) path to resource on WebDAV server. Defaults is root directory of WebDAV.
+        :return: True if resource is exist or False otherwise
+        """
         urn = Urn(remote_path)
-        response = BytesIO()
-
-        url = {'hostname': self.webdav.hostname, 'root': self.webdav.root, 'path': urn.quote()}
-        options = {
-            'URL': "{hostname}{root}{path}".format(**url),
-            'CUSTOMREQUEST': Client.requests['check'],
-        }
-
-        response = requests.request(
-            options["CUSTOMREQUEST"],
-            options["URL"],
-            auth=(self.webdav.login, self.webdav.password),
-            headers=self.get_header('check')
-        )
+        try:
+            response = self.execute_request(action='check', path=urn.quote())
+        except ResponseErrorCode:
+            return False
 
         if int(response.status_code) == 200:
             return True
@@ -238,28 +305,28 @@ class Client(object):
 
     @wrap_connection_error
     def mkdir(self, remote_path):
+        """Makes new directory on WebDAV server.
 
+        :param remote_path: path to directory
+        :return: True if request executed with code 200 and False otherwise.
+
+        """
         directory_urn = Urn(remote_path, directory=True)
 
         if not self.check(directory_urn.parent()):
             raise RemoteParentNotFound(directory_urn.path())
 
-        url = {'hostname': self.webdav.hostname, 'root': self.webdav.root, 'path': directory_urn.quote()}
-        options = {
-            'URL': "{hostname}{root}{path}".format(**url),
-            'CUSTOMREQUEST': Client.requests['mkdir'],
-        }
+        response = self.execute_request(action='mkdir', path=directory_urn.quote())
 
-        response = requests.request(
-            options["CUSTOMREQUEST"],
-            options["URL"],
-            auth=(self.webdav.login, self.webdav.password),
-            headers=self.get_header('mkdir')
-        )
-        # TODO: check response status
+        return response.status_code == 200
 
     @wrap_connection_error
     def download_to(self, buff, remote_path):
+        """Downloads file from WebDAV and writes it in buffer.
+
+        :param buff: buffer object for writing of downloaded file content.
+        :param remote_path: path to file on WebDAV server.
+        """
         urn = Urn(remote_path)
 
         if self.is_dir(urn.path()):
@@ -268,21 +335,17 @@ class Client(object):
         if not self.check(urn.path()):
             raise RemoteResourceNotFound(urn.path())
 
-        url = {'hostname': self.webdav.hostname, 'root': self.webdav.root, 'path': urn.quote()}
-        options = {
-            'URL': "{hostname}{root}{path}".format(**url),
-        }
+        response = self.execute_request(action='download_to', path=urn.quote())
 
-        response = requests.request(
-            "GET",
-            options["URL"],
-            auth=(self.webdav.login, self.webdav.password),
-            headers=self.get_header('download_to')
-        )
         buff.write(response.content)
 
     def download(self, remote_path, local_path, progress=None):
+        """Downloads remote resource from WebDAV and save it in local path.
 
+        :param remote_path: the path to remote resource for downloading can be file and directory.
+        :param local_path: the path to save resource locally.
+        :param progress: progress function. Not supported now.
+        """
         urn = Urn(remote_path)
         if self.is_dir(urn.path()):
             self.download_directory(local_path=local_path, remote_path=remote_path, progress=progress)
@@ -290,7 +353,13 @@ class Client(object):
             self.download_file(local_path=local_path, remote_path=remote_path, progress=progress)
 
     def download_directory(self, remote_path, local_path, progress=None):
+        """Downloads directory and downloads all nested files and directories from remote WebDAV to local.
+        If there is something on local path it deletes directories and files then creates new.
 
+        :param remote_path: the path to directory for downloading form WebDAV server.
+        :param local_path: the path to local directory for saving downloaded files and directories.
+        :param progress: Progress function. Not supported now.
+        """
         urn = Urn(remote_path, directory=True)
 
         if not self.is_dir(urn.path()):
@@ -307,8 +376,13 @@ class Client(object):
             self.download(local_path=_local_path, remote_path=_remote_path, progress=progress)
 
     @wrap_connection_error
-    def download_file(self, remote_path, local_path):
+    def download_file(self, remote_path, local_path, progress=None):
+        """Downloads file from WebDAV server and save it locally.
 
+        :param remote_path: the path to remote file for downloading.
+        :param local_path: the path to save file locally.
+        :param progress: progress function. Not supported now.
+        """
         urn = Urn(remote_path)
 
         if self.is_dir(urn.path()):
@@ -321,39 +395,40 @@ class Client(object):
             raise RemoteResourceNotFound(urn.path())
 
         with open(local_path, 'wb') as local_file:
+            response = self.execute_request('download_file', urn.quote())
 
-            url = {'hostname': self.webdav.hostname, 'root': self.webdav.root, 'path': urn.quote()}
-            options = {
-                'URL': "{hostname}{root}{path}".format(**url),
-                'HTTPHEADER': self.get_header('download_file'),
-                'WRITEDATA': local_file,
-                'NOBODY': 0
-            }
-
-            response = requests.request(
-                "GET",
-                options["URL"],
-                auth=(self.webdav.login, self.webdav.password),
-                headers=self.get_header('download_file')
-            )
             for block in response.iter_content(1024):
                 local_file.write(block)
 
     def download_sync(self, remote_path, local_path, callback=None):
+        """Downloads remote resources from WebDAV server synchronously.
 
+        :param remote_path: the path to remote resource on WebDAV server. Can be file and directory.
+        :param local_path: the path to save resource locally.
+        :param callback: the callback which will be invoked when downloading is complete.
+        """
         self.download(local_path=local_path, remote_path=remote_path)
 
         if callback:
             callback()
 
-    # def download_async(self, remote_path, local_path, callback=None):
+    def download_async(self, remote_path, local_path, callback=None):
+        """Downloads remote resources from WebDAV server asynchronously
 
-    #     target = (lambda: self.download_sync(local_path=local_path, remote_path=remote_path, callback=callback))
-    #     threading.Thread(target=target).start()
+        :param remote_path: the path to remote resource on WebDAV server. Can be file and directory.
+        :param local_path: the path to save resource locally.
+        :param callback: the callback which will be invoked when downloading is complete.
+        """
+        target = (lambda: self.download_sync(local_path=local_path, remote_path=remote_path, callback=callback))
+        threading.Thread(target=target).start()
 
     @wrap_connection_error
     def upload_from(self, buff, remote_path):
+        """Uploads file from buffer to remote path on WebDAV server.
 
+        :param buff: the buffer with content for file.
+        :param remote_path: the path to save file remotely on WebDAV server.
+        """
         urn = Urn(remote_path)
 
         if urn.is_dir():
@@ -362,36 +437,30 @@ class Client(object):
         if not self.check(urn.parent()):
             raise RemoteParentNotFound(urn.path())
 
-        url = {'hostname': self.webdav.hostname, 'root': self.webdav.root, 'path': urn.quote()}
-        options = {
-            'URL': "{hostname}{root}{path}".format(**url),
-        }
-        # import ipdb; ipdb.set_trace();
-        #FIXME
-        if buff.tell() == 0:
-            data = buff.read()
-        else:
-            data = buff
-        response = requests.request(
-            'PUT',
-            options["URL"],
-            auth=(self.webdav.login, self.webdav.password),
-            headers=self.get_header('upload_from'),
-            data=data
-        )
-        if response.status_code == 507:
-            raise NotEnoughSpace()
-        log.debug("Response: %s", response)
+        self.execute_request(action='upload_from', path=urn.quote(), data=buff)
 
     def upload(self, remote_path, local_path, progress=None):
+        """Uploads resource to remote path on WebDAV server.
+        In case resource is directory it will upload all nested files and directories.
 
+        :param remote_path: the path for uploading resources on WebDAV server. Can be file and directory.
+        :param local_path: the path to local resource for uploading.
+        :param progress: Progress function. Not supported now.
+        """
         if os.path.isdir(local_path):
             self.upload_directory(local_path=local_path, remote_path=remote_path, progress=progress)
         else:
             self.upload_file(local_path=local_path, remote_path=remote_path)
 
     def upload_directory(self, remote_path, local_path, progress=None):
+        """Uploads directory to remote path on WebDAV server.
+        In case directory is exist on remote server it will delete it and then upload directory with nested files and
+        directories.
 
+        :param remote_path: the path to directory for uploading on WebDAV server.
+        :param local_path: the path to local directory for uploading.
+        :param progress: Progress function. Not supported now.
+        """
         urn = Urn(remote_path, directory=True)
 
         if not urn.is_dir():
@@ -414,8 +483,14 @@ class Client(object):
             self.upload(local_path=_local_path, remote_path=_remote_path, progress=progress)
 
     @wrap_connection_error
-    def upload_file(self, remote_path, local_path):
+    def upload_file(self, remote_path, local_path, progress=None):
+        """Uploads file to remote path on WebDAV server.
+        File should be 2Gb or less.
 
+        :param remote_path: the path to uploading file on WebDAV server.
+        :param local_path: the path to local file for uploading.
+        :param progress: Progress function. Not supported now.
+        """
         if not os.path.exists(local_path):
             raise LocalResourceNotFound(local_path)
 
@@ -431,37 +506,44 @@ class Client(object):
             raise RemoteParentNotFound(urn.path())
 
         with open(local_path, "rb") as local_file:
-            url = {'hostname': self.webdav.hostname, 'root': self.webdav.root, 'path': urn.quote()}
-
             file_size = os.path.getsize(local_path)
             if file_size > self.large_size:
-                raise ResourceTooBig(path=local_path, size=file_size)
+                raise ResourceTooBig(path=local_path, size=file_size, max_size=self.large_size)
 
-            response = requests.request(
-                method='PUT',
-                url="{hostname}{root}{path}".format(**url),
-                auth=(self.webdav.login, self.webdav.password),
-                headers=self.get_header('upload_file'),
-                data=local_file
-            )
-            if response.status_code == 507:
-                raise NotEnoughSpace()
+            self.execute_request(action='upload_file', path=urn.quote(), data=local_file)
 
     def upload_sync(self, remote_path, local_path, callback=None):
+        """Uploads resource to remote path on WebDAV server synchronously.
+        In case resource is directory it will upload all nested files and directories.
 
+        :param remote_path: the path for uploading resources on WebDAV server. Can be file and directory.
+        :param local_path: the path to local resource for uploading.
+        :param callback: the callback which will be invoked when downloading is complete.
+        """
         self.upload(local_path=local_path, remote_path=remote_path)
 
         if callback:
             callback()
 
-    # def upload_async(self, remote_path, local_path, callback=None):
+    def upload_async(self, remote_path, local_path, callback=None):
+        """Uploads resource to remote path on WebDAV server asynchronously.
+        In case resource is directory it will upload all nested files and directories.
 
-    #     target = (lambda: self.upload_sync(local_path=local_path, remote_path=remote_path, callback=callback))
-    #     threading.Thread(target=target).start()
+        :param remote_path: the path for uploading resources on WebDAV server. Can be file and directory.
+        :param local_path: the path to local resource for uploading.
+        :param callback: the callback which will be invoked when downloading is complete.
+        """
+        target = (lambda: self.upload_sync(local_path=local_path, remote_path=remote_path, callback=callback))
+        threading.Thread(target=target).start()
 
+    # TODO refactor code below and write tests for it.
     @wrap_connection_error
     def copy(self, remote_path_from, remote_path_to):
+        """Copies resource from one place to another on WebDAV server.
 
+        :param remote_path_from: the path to resource which will be copied,
+        :param remote_path_to: the path where resource will be copied.
+        """
         def header(remote_path_to):
 
             path = Urn(remote_path_to).path()
@@ -679,14 +761,12 @@ class Client(object):
     def get_property(self, remote_path, option):
 
         def parse(response, option):
-
             response_str = response.content
             tree = etree.fromstring(response_str)
             xpath = "{xpath_prefix}{xpath_exp}".format(xpath_prefix=".//", xpath_exp=option['name'])
             return tree.findtext(xpath)
 
         def data(option):
-
             root = etree.Element("propfind", xmlns="DAV:")
             prop = etree.SubElement(root, "prop")
             etree.SubElement(prop, option.get('name', ""), xmlns=option.get('namespace', ""))
@@ -724,7 +804,6 @@ class Client(object):
     def set_property(self, remote_path, option):
 
         def data(option):
-
             root_node = etree.Element("propertyupdate", xmlns="DAV:")
             root_node.set('xmlns:u', option.get('namespace', ""))
             set_node = etree.SubElement(root_node, "set")
@@ -783,7 +862,8 @@ class Client(object):
         for local_resource_name in listdir(local_directory):
 
             local_path = os.path.join(local_directory, local_resource_name)
-            remote_path = "{remote_directory}{resource_name}".format(remote_directory=urn.path(), resource_name=local_resource_name)
+            remote_path = "{remote_directory}{resource_name}".format(remote_directory=urn.path(),
+                                                                     resource_name=local_resource_name)
 
             if os.path.isdir(local_path):
                 if not self.check(remote_path=remote_path):
@@ -816,7 +896,8 @@ class Client(object):
         for remote_resource_name in remote_resource_names:
 
             local_path = os.path.join(local_directory, remote_resource_name)
-            remote_path = "{remote_directory}{resource_name}".format(remote_directory=urn.path(), resource_name=remote_resource_name)
+            remote_path = "{remote_directory}{resource_name}".format(remote_directory=urn.path(),
+                                                                     resource_name=remote_resource_name)
 
             remote_urn = Urn(remote_path)
 
@@ -836,7 +917,6 @@ class Client(object):
 
 
 class Resource(object):
-
     def __init__(self, client, urn):
         self.client = client
         self.urn = urn
@@ -848,7 +928,6 @@ class Resource(object):
         return self.client.is_dir(self.urn.path())
 
     def rename(self, new_name):
-
         old_path = self.urn.path()
         parent_path = self.urn.parent()
         new_name = Urn(new_name).filename()
@@ -858,19 +937,16 @@ class Resource(object):
         self.urn = Urn(new_path)
 
     def move(self, remote_path):
-
         new_urn = Urn(remote_path)
         self.client.move(remote_path_from=self.urn.path(), remote_path_to=new_urn.path())
         self.urn = new_urn
 
     def copy(self, remote_path):
-
         urn = Urn(remote_path)
         self.client.copy(remote_path_from=self.urn.path(), remote_path_to=remote_path)
         return Resource(self.client, urn)
 
     def info(self, params=None):
-
         info = self.client.info(self.urn.path())
         if not params:
             return info

@@ -79,6 +79,17 @@ class NotConnection(WebDavException):
         return "Not connection with {hostname}".format(hostname=self.hostname)
 
 
+class ResponseErrorCode(WebDavException):
+    def __init__(self, url, code, message):
+        self.url = url
+        self.code = code
+        self.message = message
+
+    def __str__(self):
+        return "Request to {url} failed with code {code} and message: {message}".format(url=self.url, code=self.code,
+                                                                                        message=self.message)
+
+
 class NotEnoughSpace(WebDavException):
     def __init__(self):
         pass

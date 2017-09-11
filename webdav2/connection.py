@@ -1,10 +1,10 @@
+from os.path import exists
 
 from webdav2.exceptions import *
 from webdav2.urn import Urn
-from os.path import exists
+
 
 class ConnectionSettings:
-
     def is_valid(self):
         pass
 
@@ -17,11 +17,23 @@ class ConnectionSettings:
         else:
             return True
 
-class WebDAVSettings(ConnectionSettings):
 
+class WebDAVSettings(ConnectionSettings):
     ns = "webdav:"
     prefix = "webdav_"
-    keys = {'hostname', 'login', 'password', 'token', 'root', 'cert_path', 'key_path', 'recv_speed', 'send_speed', 'verbose'}
+    keys = {'hostname', 'login', 'password', 'token', 'root', 'cert_path', 'key_path', 'recv_speed', 'send_speed',
+            'verbose'}
+
+    hostname = None
+    login = None
+    password = None
+    token = None
+    root = None
+    cert_path = None
+    key_path = None
+    recv_speed = None
+    send_speed = None
+    verbose = None
 
     def __init__(self, options):
 
@@ -57,10 +69,13 @@ class WebDAVSettings(ConnectionSettings):
 
 
 class ProxySettings(ConnectionSettings):
-
     ns = "proxy:"
     prefix = "proxy_"
     keys = {'hostname', 'login', 'password'}
+
+    hostname = None
+    login = None
+    password = None
 
     def __init__(self, options):
 
