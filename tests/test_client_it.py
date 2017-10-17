@@ -11,7 +11,7 @@ class ClientTestCase(TestCase):
     remote_path_file = 'test_dir/test.txt'
     remote_path_dir = 'test_dir'
     local_path_file = 'test.txt'
-    local_path_dir = u'res/test_dir'
+    local_path_dir = 'res/test_dir'
 
     def setUp(self):
         options = {
@@ -42,7 +42,7 @@ class ClientTestCase(TestCase):
 
     def test_download_to(self):
         buff = BytesIO()
-        self.client.download_to(buff=buff, remote_path=self.remote_path_file)
+        self.client.download_from(buff=buff, remote_path=self.remote_path_file)
         self.assertEquals(buff.getvalue(), 'test content for testing of webdav client')
 
     def test_download(self):
@@ -90,7 +90,7 @@ class ClientTestCase(TestCase):
     def test_upload_from(self):
         self._prepare_for_uploading()
         buff = StringIO(u'test content for testing of webdav client')
-        self.client.upload_from(buff=buff, remote_path=self.remote_path_file)
+        self.client.upload_to(buff=buff, remote_path=self.remote_path_file)
         self.assertTrue(self.client.check(self.remote_path_file), 'Expected the file is uploaded.')
         self.test_download_to()
 
@@ -122,6 +122,22 @@ class ClientTestCase(TestCase):
             self.assertTrue(self.client.check(self.remote_path_file), 'Expected the file is uploaded.')
 
         self.client.upload(remote_path=self.remote_path_file, local_path=self.local_path_dir)
+
+    def test_get_property(self):
+        self._prepare_for_downloading()
+        result = self.client.get_property(remote_path=self.remote_path_file, option={'name': 'aProperty'})
+        self.assertEquals(result, None)
+
+    def test_set_property(self):
+        self._prepare_for_downloading()
+        self.client.set_property(remote_path=self.remote_path_file, option={
+            'namespace': 'test',
+            'name': 'aProperty',
+            'value': 'aValue'
+        })
+        result = self.client.get_property(remote_path=self.remote_path_file,
+                                          option={'namespace': 'test', 'name': 'aProperty'})
+        self.assertEquals(result, "aValue")
 
     def _prepare_for_downloading(self):
         if not self.client.check(remote_path=self.remote_path_dir):

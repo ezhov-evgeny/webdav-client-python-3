@@ -94,8 +94,8 @@ class Client(object):
         'clean': ["Accept: */*", "Connection: Keep-Alive"],
         'check': ["Accept: */*"],
         'info': ["Accept: */*", "Depth: 1"],
-        'get_metadata': ["Accept: */*", "Depth: 1", "Content-Type: application/x-www-form-urlencoded"],
-        'set_metadata': ["Accept: */*", "Depth: 1", "Content-Type: application/x-www-form-urlencoded"]
+        'get_property': ["Accept: */*", "Depth: 1", "Content-Type: application/x-www-form-urlencoded"],
+        'set_property': ["Accept: */*", "Depth: 1", "Content-Type: application/x-www-form-urlencoded"]
     }
 
     def get_header(self, action):
@@ -166,8 +166,8 @@ class Client(object):
         'publish': "PROPPATCH",
         'unpublish': "PROPPATCH",
         'published': "PROPPATCH",
-        'get_metadata': "PROPFIND",
-        'set_metadata': "PROPPATCH"
+        'get_property': "PROPFIND",
+        'set_property': "PROPPATCH"
     }
 
     meta_xmlns = {
@@ -219,29 +219,13 @@ class Client(object):
         :param remote_path: path to remote directory.
         :return: list of nested file or directory names.
         """
-
-        def parse(list_response):
-            """Parses of response from WebDAV server and extract file and directory names.
-
-            :param list_response: HTTP response from WebDAV server for getting list of files by remote path.
-            :return: list of extracted file or directory names.
-            """
-            try:
-                response_str = list_response.content
-                tree = etree.fromstring(response_str)
-                hrees = [unquote(hree.text) for hree in tree.findall(".//{DAV:}href")]
-                return [Urn(hree) for hree in hrees]
-            except etree.XMLSyntaxError:
-                return list()
-
         directory_urn = Urn(remote_path, directory=True)
-
         if directory_urn.path() != Client.root:
             if not self.check(directory_urn.path()):
                 raise RemoteResourceNotFound(directory_urn.path())
 
         response = self.execute_request(action='list', path=directory_urn.quote())
-        urns = parse(response)
+        urns = WebDavXmlUtils.parse_get_list_response(response.content)
 
         path = "{root}{path}".format(root=self.webdav.root, path=directory_urn.path())
         return [urn.filename() for urn in urns if urn.path() != path and urn.path() != path[:-1]]
@@ -252,39 +236,9 @@ class Client(object):
 
         :return: an amount of free space in bytes.
         """
-
-        def parse(free_response):
-            """Parses of response from WebDAV server and extract na amount of free space.
-
-            :param free_response: HTTP response from WebDAV server for getting free space.
-            :return: an amount of free space in bytes.
-            """
-            try:
-                response_str = free_response.content
-                tree = etree.fromstring(response_str)
-                node = tree.find('.//{DAV:}quota-available-bytes')
-                if node is not None:
-                    return int(node.text)
-                else:
-                    raise MethodNotSupported(name='free', server=self.webdav.hostname)
-            except TypeError:
-                raise MethodNotSupported(name='free', server=self.webdav.hostname)
-            except etree.XMLSyntaxError:
-                return str()
-
-        def data():
-            root = etree.Element("propfind", xmlns="DAV:")
-            prop = etree.SubElement(root, "prop")
-            etree.SubElement(prop, "quota-available-bytes")
-            etree.SubElement(prop, "quota-used-bytes")
-            tree = etree.ElementTree(root)
-            buff = BytesIO()
-            tree.write(buff)
-            return buff.getvalue()
-
-        response = self.execute_request(action='free', path='', data=data())
-
-        return parse(response)
+        data = WebDavXmlUtils.create_free_space_request_content()
+        response = self.execute_request(action='free', path='', data=data)
+        return WebDavXmlUtils.parse_free_space_response(response.content, self.webdav.hostname)
 
     @wrap_connection_error
     def check(self, remote_path=root):
@@ -321,7 +275,7 @@ class Client(object):
         return response.status_code == 200
 
     @wrap_connection_error
-    def download_to(self, buff, remote_path):
+    def download_from(self, buff, remote_path):
         """Downloads file from WebDAV and writes it in buffer.
 
         :param buff: buffer object for writing of downloaded file content.
@@ -423,7 +377,7 @@ class Client(object):
         threading.Thread(target=target).start()
 
     @wrap_connection_error
-    def upload_from(self, buff, remote_path):
+    def upload_to(self, buff, remote_path):
         """Uploads file from buffer to remote path on WebDAV server.
 
         :param buff: the buffer with content for file.
@@ -544,6 +498,7 @@ class Client(object):
         :param remote_path_from: the path to resource which will be copied,
         :param remote_path_to: the path where resource will be copied.
         """
+
         def header(remote_path_to):
 
             path = Urn(remote_path_to).path()
@@ -753,91 +708,48 @@ class Client(object):
 
         return parse(response, path)
 
-    def resource(self, remote_path):
-        urn = Urn(remote_path)
-        return Resource(self, urn.path())
-
     @wrap_connection_error
     def get_property(self, remote_path, option):
+        """
+        Gets metadata property of remote resource on WebDAV server.
+        More information you can find by link http://webdav.org/specs/rfc4918.html#METHOD_PROPFIND
 
-        def parse(response, option):
-            response_str = response.content
-            tree = etree.fromstring(response_str)
-            xpath = "{xpath_prefix}{xpath_exp}".format(xpath_prefix=".//", xpath_exp=option['name'])
-            return tree.findtext(xpath)
-
-        def data(option):
-            root = etree.Element("propfind", xmlns="DAV:")
-            prop = etree.SubElement(root, "prop")
-            etree.SubElement(prop, option.get('name', ""), xmlns=option.get('namespace', ""))
-            tree = etree.ElementTree(root)
-
-            buff = BytesIO()
-
-            tree.write(buff)
-            return buff.getvalue()
-
+        :param remote_path: the path to remote resource.
+        :param option: the property attribute as dictionary with following keys:
+                       `namespace`: (optional) the namespace for XML property which will be set,
+                       `name`: the name of property which will be set.
+        :return: the value of property or None if property is not found.
+        """
         urn = Urn(remote_path)
-
         if not self.check(urn.path()):
             raise RemoteResourceNotFound(urn.path())
 
-        url = {'hostname': self.webdav.hostname, 'root': self.webdav.root, 'path': urn.quote()}
-        options = {
-            'URL': "{hostname}{root}{path}".format(**url),
-            'CUSTOMREQUEST': Client.requests['get_metadata'],
-            'HTTPHEADER': self.get_header('get_metadata'),
-            'POSTFIELDS': data(option),
-            'NOBODY': 0
-        }
-
-        response = requests.request(
-            options["CUSTOMREQUEST"],
-            options["URL"],
-            auth=(self.webdav.login, self.webdav.password),
-            headers=self.get_header('get_metadata'),
-            data=data(option)
-        )
-        return parse(response, option)
+        data = WebDavXmlUtils.create_get_property_request_content(option)
+        response = self.execute_request(action='get_property', path=urn.quote(), data=data)
+        return WebDavXmlUtils.parse_get_property_response(response.content, option['name'])
 
     @wrap_connection_error
     def set_property(self, remote_path, option):
+        """
+        Sets metadata property of remote resource on WebDAV server.
+        More information you can find by link http://webdav.org/specs/rfc4918.html#METHOD_PROPPATCH
 
-        def data(option):
-            root_node = etree.Element("propertyupdate", xmlns="DAV:")
-            root_node.set('xmlns:u', option.get('namespace', ""))
-            set_node = etree.SubElement(root_node, "set")
-            prop_node = etree.SubElement(set_node, "prop")
-            opt_node = etree.SubElement(prop_node, "{namespace}:{name}".format(namespace='u', name=option['name']))
-            opt_node.text = option.get('value', "")
-
-            tree = etree.ElementTree(root_node)
-
-            buff = BytesIO()
-            tree.write(buff)
-
-            return buff.getvalue()
-
+        :param remote_path: the path to remote resource.
+        :param option: the property attribute as dictionary with following keys:
+                       `namespace`: (optional) the namespace for XML property which will be set,
+                       `name`: the name of property which will be set,
+                       `value`: (optional) the value of property which will be set. Defaults is empty string.
+        """
         urn = Urn(remote_path)
-
         if not self.check(urn.path()):
             raise RemoteResourceNotFound(urn.path())
 
-        url = {'hostname': self.webdav.hostname, 'root': self.webdav.root, 'path': urn.quote()}
-        options = {
-            'URL': "{hostname}{root}{path}".format(**url),
-            'CUSTOMREQUEST': Client.requests['set_metadata'],
-            'HTTPHEADER': self.get_header('get_metadata'),
-            'POSTFIELDS': data(option)
-        }
+        data = WebDavXmlUtils.create_set_property_request_content(option)
+        self.execute_request(action='set_property', path=urn.quote(), data=data)
 
-        response = requests.request(
-            options["CUSTOMREQUEST"],
-            options["URL"],
-            auth=(self.webdav.login, self.webdav.password),
-            headers=self.get_header('get_metadata'),
-            data=data(option)
-        )
+    def resource(self, remote_path):
+        urn = Urn(remote_path)
+        return Resource(self, urn.path())
 
     def push(self, remote_directory, local_directory):
 
@@ -960,7 +872,7 @@ class Resource(object):
         return self.client.check(self.urn.path())
 
     def read_from(self, buff):
-        self.client.upload_from(buff=buff, remote_path=self.urn.path())
+        self.client.upload_to(buff=buff, remote_path=self.urn.path())
 
     def read(self, local_path):
         return self.client.upload_sync(local_path=local_path, remote_path=self.urn.path())
@@ -969,7 +881,7 @@ class Resource(object):
         return self.client.upload_async(local_path=local_path, remote_path=self.urn.path(), callback=callback)
 
     def write_to(self, buff):
-        return self.client.download_to(buff=buff, remote_path=self.urn.path())
+        return self.client.download_from(buff=buff, remote_path=self.urn.path())
 
     def write(self, local_path):
         return self.client.download_sync(local_path=local_path, remote_path=self.urn.path())
@@ -991,3 +903,116 @@ class Resource(object):
     def property(self, option, value):
         option['value'] = value.__str__()
         self.client.set_property(remote_path=self.urn.path(), option=option)
+
+
+class WebDavXmlUtils:
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def parse_get_list_response(content):
+        """
+        Parses of response content XML from WebDAV server and extract file and directory names.
+
+        :param content: the XML content of HTTP response from WebDAV server for getting list of files by remote path.
+        :return: list of extracted file or directory names.
+        """
+        try:
+            tree = etree.fromstring(content)
+            hrees = [unquote(hree.text) for hree in tree.findall(".//{DAV:}href")]
+            return [Urn(hree) for hree in hrees]
+        except etree.XMLSyntaxError:
+            return list()
+
+    @staticmethod
+    def create_free_space_request_content():
+        """
+        Creates an XML for requesting of free space on remote WebDAV server.
+
+        :return: the XML string of request content.
+        """
+        root = etree.Element("propfind", xmlns="DAV:")
+        prop = etree.SubElement(root, "prop")
+        etree.SubElement(prop, "quota-available-bytes")
+        etree.SubElement(prop, "quota-used-bytes")
+        tree = etree.ElementTree(root)
+        return WebDavXmlUtils.etree_to_string(tree)
+
+    @staticmethod
+    def parse_free_space_response(content, hostname):
+        """
+        Parses of response content XML from WebDAV server and extract na amount of free space.
+
+        :param content: the XML content of HTTP response from WebDAV server for getting free space.
+        :return: an amount of free space in bytes.
+        """
+        try:
+            tree = etree.fromstring(content)
+            node = tree.find('.//{DAV:}quota-available-bytes')
+            if node is not None:
+                return int(node.text)
+            else:
+                raise MethodNotSupported(name='free', server=hostname)
+        except TypeError:
+            raise MethodNotSupported(name='free', server=hostname)
+        except etree.XMLSyntaxError:
+            return str()
+
+    @staticmethod
+    def create_get_property_request_content(option):
+        """
+        Creates an XML for requesting of getting a property value of remote WebDAV resource.
+
+        :param option: the property attributes as dictionary with following keys:
+                       `namespace`: (optional) the namespace for XML property which will be get,
+                       `name`: the name of property which will be get.
+        :return: the XML string of request content.
+        """
+        root = etree.Element("propfind", xmlns="DAV:")
+        prop = etree.SubElement(root, "prop")
+        etree.SubElement(prop, option.get('name', ""), xmlns=option.get('namespace', ""))
+        tree = etree.ElementTree(root)
+        return WebDavXmlUtils.etree_to_string(tree)
+
+    @staticmethod
+    def parse_get_property_response(content, name):
+        """
+        Parses of response content XML from WebDAV server for getting metadata property value for some resource.
+
+        :param content: the XML content of response as string.
+        :param name: the name of property for finding a value in response
+        :return: the value of property if it has been found or None otherwise.
+        """
+        tree = etree.fromstring(content)
+        return tree.xpath('//*[local-name() = $name]', name=name)[0].text
+
+    @staticmethod
+    def create_set_property_request_content(option):
+        """
+        Creates an XML for requesting of setting a property value for remote WebDAV resource.
+
+        :param option: the property attributes as dictionary with following keys:
+                       `namespace`: (optional) the namespace for XML property which will be set,
+                       `name`: the name of property which will be set,
+                       `value`: (optional) the value of property which will be set. Defaults is empty string.
+        :return: the XML string of request content.
+        """
+        root_node = etree.Element('propertyupdate', xmlns='DAV:')
+        set_node = etree.SubElement(root_node, 'set')
+        prop_node = etree.SubElement(set_node, 'prop')
+        opt_node = etree.SubElement(prop_node, option['name'], xmlns=option.get('namespace', ''))
+        opt_node.text = option.get('value', '')
+        tree = etree.ElementTree(root_node)
+        return WebDavXmlUtils.etree_to_string(tree)
+
+    @staticmethod
+    def etree_to_string(tree):
+        """
+        Creates string from lxml.etree.ElementTree with XML declaration and UTF-8 encoding.
+
+        :param tree: the instance of ElementTree
+        :return: the string of XML.
+        """
+        buff = BytesIO()
+        tree.write(buff, xml_declaration=True, encoding='UTF-8')
+        return buff.getvalue()
