@@ -55,7 +55,7 @@ setup(
     long_description=open('README.rst').read(),
     author='Evgeny Ezhov',
     author_email='ezhov.evgeny@gmail.com',
-    url='https://github.com/ezhov-evgeny/webdav-client-python-2',
+    url='https://github.com/ezhov-evgeny/webdav-client-python-3',
     license='MIT License',
     keywords='webdav, client, python, module, library, packet, Yandex.Disk, Dropbox, Google Disk, Box, 4shared',
     classifiers=[

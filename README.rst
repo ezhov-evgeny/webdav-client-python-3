@@ -7,6 +7,10 @@ But uses `requests` instead of `PyCURL`
 
 Release Notes
 =============
+Version 0.4 - TBD
+* Refactoring of WebDAV client and making it works in following methods:
+    - Checking is remote resource directory
+
 Version 0.3 - 18.10.2017
 * Refactoring of WebDAV client and making it works in following methods:
     - Getting of WebDAV resource property value
