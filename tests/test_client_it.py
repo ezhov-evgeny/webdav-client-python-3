@@ -9,7 +9,9 @@ from webdav3.client import Client
 
 class ClientTestCase(TestCase):
     remote_path_file = 'test_dir/test.txt'
+    remote_path_file2 = 'test_dir2/test.txt'
     remote_path_dir = 'test_dir'
+    remote_path_dir2 = 'test_dir2'
     local_path_file = 'test.txt'
     local_path_dir = 'res/test_dir'
 
@@ -23,7 +25,16 @@ class ClientTestCase(TestCase):
         if path.exists(path=self.local_path_dir):
             shutil.rmtree(path=self.local_path_dir)
 
+    def tearDown(self):
+        if path.exists(path=self.local_path_dir):
+            shutil.rmtree(path=self.local_path_dir)
+        if self.client.check(remote_path=self.remote_path_dir):
+            self.client.clean(remote_path=self.remote_path_dir)
+        if self.client.check(remote_path=self.remote_path_dir2):
+            self.client.clean(remote_path=self.remote_path_dir2)
+
     def test_list(self):
+        self._prepare_for_downloading()
         file_list = self.client.list()
         self.assertIsNotNone(file_list, 'List of files should not be None')
         self.assertGreater(file_list.__len__(), 0, 'Expected that amount of files more then 0')
@@ -41,15 +52,14 @@ class ClientTestCase(TestCase):
         self.assertTrue(self.client.check(remote_path=self.remote_path_dir), 'Expected the directory is created.')
 
     def test_download_to(self):
+        self._prepare_for_downloading()
         buff = BytesIO()
         self.client.download_from(buff=buff, remote_path=self.remote_path_file)
         self.assertEquals(buff.getvalue(), 'test content for testing of webdav client')
 
     def test_download(self):
         self._prepare_for_downloading()
-
         self.client.download(local_path=self.local_path_dir, remote_path=self.remote_path_dir)
-
         self.assertTrue(path.exists(self.local_path_dir), 'Expected the directory is downloaded.')
         self.assertTrue(path.isdir(self.local_path_dir), 'Expected this is a directory.')
         self.assertTrue(path.exists(self.local_path_dir + os.path.sep + self.local_path_file),
@@ -122,6 +132,19 @@ class ClientTestCase(TestCase):
             self.assertTrue(self.client.check(self.remote_path_file), 'Expected the file is uploaded.')
 
         self.client.upload(remote_path=self.remote_path_file, local_path=self.local_path_dir)
+
+    def test_copy(self):
+        self._prepare_for_downloading()
+        self.client.mkdir(remote_path=self.remote_path_dir2)
+        self.client.copy(remote_path_from=self.remote_path_file, remote_path_to=self.remote_path_file2)
+        self.assertTrue(self.client.check(remote_path=self.remote_path_file2))
+
+    def test_move(self):
+        self._prepare_for_downloading()
+        self.client.mkdir(remote_path=self.remote_path_dir2)
+        self.client.move(remote_path_from=self.remote_path_file, remote_path_to=self.remote_path_file2)
+        self.assertFalse(self.client.check(remote_path=self.remote_path_file))
+        self.assertTrue(self.client.check(remote_path=self.remote_path_file2))
 
     def test_get_property(self):
         self._prepare_for_downloading()

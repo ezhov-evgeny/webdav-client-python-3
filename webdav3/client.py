@@ -98,24 +98,29 @@ class Client(object):
         'set_property': ["Accept: */*", "Depth: 1", "Content-Type: application/x-www-form-urlencoded"]
     }
 
-    def get_header(self, action):
-        """Returns HTTP headers of specified WebDAV actions
+    def get_headers(self, action, headers_ext=None):
+        """Returns HTTP headers of specified WebDAV actions.
 
-        :param action: the identifier of action
-        :return: the dictionary of headers for specified action
+        :param action: the identifier of action.
+        :param headers_ext: (optional) the addition headers list witch sgould be added to basic HTTP headers for
+                            the specified action.
+        :return: the dictionary of headers for specified action.
         """
         if action in Client.http_header:
             try:
-                header = Client.http_header[action].copy()
+                headers = Client.http_header[action].copy()
             except AttributeError:
-                header = Client.http_header[action][:]
+                headers = Client.http_header[action][:]
         else:
-            header = list()
+            headers = list()
+
+        if headers_ext:
+            headers.extend(headers_ext)
 
         if self.webdav.token:
             webdav_token = "Authorization: OAuth {token}".format(token=self.webdav.token)
-            header.append(webdav_token)
-        return dict([map(lambda s: s.strip(), i.split(':')) for i in header])
+            headers.append(webdav_token)
+        return dict([map(lambda s: s.strip(), i.split(':')) for i in headers])
 
     def get_url(self, path):
         """Generates url by uri path.
@@ -126,20 +131,22 @@ class Client(object):
         url = {'hostname': self.webdav.hostname, 'root': self.webdav.root, 'path': path}
         return "{hostname}{root}{path}".format(**url)
 
-    def execute_request(self, action, path, data=None):
+    def execute_request(self, action, path, data=None, headers_ext=None):
         """Generate request to WebDAV server for specified action and path and execute it.
 
         :param action: the action for WebDAV server which should be executed.
         :param path: the path to resource for action
         :param data: (optional) Dictionary or list of tuples ``[(key, value)]`` (will be form-encoded), bytes,
                      or file-like object to send in the body of the :class:`Request`.
+        :param headers_ext: (optional) the addition headers list witch should be added to basic HTTP headers for
+                            the specified action.
         :return: HTTP response of request.
         """
         response = requests.request(
             method=Client.requests[action],
             url=self.get_url(path),
             auth=(self.webdav.login, self.webdav.password),
-            headers=self.get_header(action),
+            headers=self.get_headers(action, headers_ext),
             data=data
         )
         if response.status_code == 507:
@@ -266,12 +273,10 @@ class Client(object):
 
         """
         directory_urn = Urn(remote_path, directory=True)
-
         if not self.check(directory_urn.parent()):
             raise RemoteParentNotFound(directory_urn.path())
 
         response = self.execute_request(action='mkdir', path=directory_urn.quote())
-
         return response.status_code == 200
 
     @wrap_connection_error
@@ -282,7 +287,6 @@ class Client(object):
         :param remote_path: path to file on WebDAV server.
         """
         urn = Urn(remote_path)
-
         if self.is_dir(urn.path()):
             raise OptionNotValid(name="remote_path", value=remote_path)
 
@@ -290,7 +294,6 @@ class Client(object):
             raise RemoteResourceNotFound(urn.path())
 
         response = self.execute_request(action='download_to', path=urn.quote())
-
         buff.write(response.content)
 
     def download(self, remote_path, local_path, progress=None):
@@ -315,7 +318,6 @@ class Client(object):
         :param progress: Progress function. Not supported now.
         """
         urn = Urn(remote_path, directory=True)
-
         if not self.is_dir(urn.path()):
             raise OptionNotValid(name="remote_path", value=remote_path)
 
@@ -338,7 +340,6 @@ class Client(object):
         :param progress: progress function. Not supported now.
         """
         urn = Urn(remote_path)
-
         if self.is_dir(urn.path()):
             raise OptionNotValid(name="remote_path", value=remote_path)
 
@@ -350,7 +351,6 @@ class Client(object):
 
         with open(local_path, 'wb') as local_file:
             response = self.execute_request('download_file', urn.quote())
-
             for block in response.iter_content(1024):
                 local_file.write(block)
 
@@ -362,7 +362,6 @@ class Client(object):
         :param callback: the callback which will be invoked when downloading is complete.
         """
         self.download(local_path=local_path, remote_path=remote_path)
-
         if callback:
             callback()
 
@@ -384,7 +383,6 @@ class Client(object):
         :param remote_path: the path to save file remotely on WebDAV server.
         """
         urn = Urn(remote_path)
-
         if urn.is_dir():
             raise OptionNotValid(name="remote_path", value=remote_path)
 
@@ -416,7 +414,6 @@ class Client(object):
         :param progress: Progress function. Not supported now.
         """
         urn = Urn(remote_path, directory=True)
-
         if not urn.is_dir():
             raise OptionNotValid(name="remote_path", value=remote_path)
 
@@ -449,7 +446,6 @@ class Client(object):
             raise LocalResourceNotFound(local_path)
 
         urn = Urn(remote_path)
-
         if urn.is_dir():
             raise OptionNotValid(name="remote_path", value=remote_path)
 
@@ -490,7 +486,6 @@ class Client(object):
         target = (lambda: self.upload_sync(local_path=local_path, remote_path=remote_path, callback=callback))
         threading.Thread(target=target).start()
 
-    # TODO refactor code below and write tests for it.
     @wrap_connection_error
     def copy(self, remote_path_from, remote_path_to):
         """Copies resource from one place to another on WebDAV server.
@@ -498,78 +493,38 @@ class Client(object):
         :param remote_path_from: the path to resource which will be copied,
         :param remote_path_to: the path where resource will be copied.
         """
-
-        def header(remote_path_to):
-
-            path = Urn(remote_path_to).path()
-            destination = "{root}{path}".format(root=self.webdav.root, path=path)
-            header = self.get_header('copy')
-            header["Destination"] = destination
-
-            return header
-
         urn_from = Urn(remote_path_from)
-
         if not self.check(urn_from.path()):
             raise RemoteResourceNotFound(urn_from.path())
 
         urn_to = Urn(remote_path_to)
-
         if not self.check(urn_to.parent()):
             raise RemoteParentNotFound(urn_to.path())
 
-        url = {'hostname': self.webdav.hostname, 'root': self.webdav.root, 'path': urn_from.quote()}
-        options = {
-            'URL': "{hostname}{root}{path}".format(**url),
-            'CUSTOMREQUEST': Client.requests['copy'],
-            'HTTPHEADER': header(remote_path_to)
-        }
-
-        h = header(remote_path_to)
-        response = requests.request(
-            options["CUSTOMREQUEST"],
-            options["URL"],
-            auth=(self.webdav.login, self.webdav.password),
-            headers=h,
-        )
-        # TODO: check response status
+        header_destination = "Destination: {root}{path}".format(root=self.webdav.root, path=urn_to.path())
+        self.execute_request(action='copy', path=urn_from.quote(), headers_ext=[header_destination])
 
     @wrap_connection_error
     def move(self, remote_path_from, remote_path_to, overwrite=False):
+        """Moves resource from one place to another on WebDAV server.
 
-        def header(remote_path_to):
-
-            path = Urn(remote_path_to).path()
-            destination = "{root}{path}".format(root=self.webdav.root, path=path)
-            header = self.get_header('move')
-            header["Destination"] = destination
-            header["Overwrite"] = "T" if overwrite else "F"
-            return header
-
+        :param remote_path_from: the path to resource which will be moved,
+        :param remote_path_to: the path where resource will be moved.
+        :param overwrite: (optional) the flag, overwrite file if it exists. Defaults is False
+        """
         urn_from = Urn(remote_path_from)
-
         if not self.check(urn_from.path()):
             raise RemoteResourceNotFound(urn_from.path())
 
         urn_to = Urn(remote_path_to)
-
         if not self.check(urn_to.parent()):
             raise RemoteParentNotFound(urn_to.path())
 
-        url = {'hostname': self.webdav.hostname, 'root': self.webdav.root, 'path': urn_from.quote()}
-        options = {
-            'URL': "{hostname}{root}{path}".format(**url),
-            'CUSTOMREQUEST': Client.requests['move'],
-        }
-        h = header(remote_path_to)
-        response = requests.request(
-            options["CUSTOMREQUEST"],
-            options["URL"],
-            auth=(self.webdav.login, self.webdav.password),
-            headers=h,
-        )
-        # TODO: check response status
+        header_destination = "Destination: {root}{path}".format(root=self.webdav.root, path=urn_to.path())
+        header_overwrite = "Overwrite: {flag}".format(flag="T" if overwrite else "F")
+        self.execute_request(action='move', path=urn_from.quote(), headers_ext=[header_destination, header_overwrite])
 
+    # TODO refactor code below and write tests for it.
     @wrap_connection_error
     def clean(self, remote_path):
 
@@ -579,14 +534,14 @@ class Client(object):
         options = {
             'URL': "{hostname}{root}{path}".format(**url),
             'CUSTOMREQUEST': Client.requests['clean'],
-            'HTTPHEADER': self.get_header('clean')
+            'HTTPHEADER': self.get_headers('clean', None)
         }
 
         response = requests.request(
             options["CUSTOMREQUEST"],
             options["URL"],
             auth=(self.webdav.login, self.webdav.password),
-            headers=self.get_header('clean'),
+            headers=self.get_headers('clean', None),
         )
         # TODO: check response status
 
@@ -645,7 +600,7 @@ class Client(object):
             options["CUSTOMREQUEST"],
             options["URL"],
             auth=(self.webdav.login, self.webdav.password),
-            headers=self.get_header('info')
+            headers=self.get_headers('info', None)
         )
         path = "{root}{path}".format(root=self.webdav.root, path=urn.path())
         return parse(response, path)
@@ -701,7 +656,7 @@ class Client(object):
             options["CUSTOMREQUEST"],
             options["URL"],
             auth=(self.webdav.login, self.webdav.password),
-            headers=self.get_header('info')
+            headers=self.get_headers('info', None)
         )
 
         path = "{root}{path}".format(root=self.webdav.root, path=urn.path())
@@ -944,6 +899,7 @@ class WebDavXmlUtils:
         Parses of response content XML from WebDAV server and extract na amount of free space.
 
         :param content: the XML content of HTTP response from WebDAV server for getting free space.
+        :param hostname: the server hostname.
         :return: an amount of free space in bytes.
         """
         try:

@@ -11,6 +11,8 @@ Version 0.3 - TBD
 * Refactoring of WebDAV client and making it works in following methods:
     - Getting of WebDAV resource property value
     - Setting of WebDAV resource property value
+    - Coping of resource on WebDAV server
+    - Moving of resource on WebDAV server
 
 Version 0.2 - 11.09.2017
 * Refactoring of WebDAV client and making it works in following methods:

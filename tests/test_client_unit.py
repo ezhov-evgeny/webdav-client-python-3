@@ -29,7 +29,7 @@ class ClientTestCase(TestCase):
                   '<d:propstat><d:status>HTTP/1.1 200 OK</d:status><d:prop><d:quota-used-bytes>697' \
                   '</d:quota-used-bytes><d:quota-available-bytes>10737417543</d:quota-available-bytes></d:prop>' \
                   '</d:propstat></d:response></d:multistatus>'
-        result = utils.parse_free_space_response(content)
+        result = utils.parse_free_space_response(content, 'localhost')
         self.assertEquals(result, 10737417543)
 
     def test_create_get_property_request_content(self):
@@ -37,7 +37,7 @@ class ClientTestCase(TestCase):
             'namespace': 'test',
             'name': 'aProperty'
         }
-        result = utils.create_get_property_request_content(option=option)
+        result = utils.create_get_property_request_content(option=option, )
         self.assertEquals(result, '<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n<propfind xmlns="DAV:"><prop>'
                                   '<aProperty xmlns="test"/></prop></propfind>')
 
