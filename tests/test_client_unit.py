@@ -32,6 +32,20 @@ class ClientTestCase(TestCase):
         result = utils.parse_free_space_response(content, 'localhost')
         self.assertEquals(result, 10737417543)
 
+    def test_parse_info_response(self):
+        content = '<?xml version="1.0" encoding="utf-8"?><d:multistatus xmlns:d="DAV:"><d:response>' \
+                  '<d:href>/test_dir/test.txt</d:href><d:propstat><d:status>HTTP/1.1 200 OK</d:status><d:prop>' \
+                  '<d:resourcetype/><d:getlastmodified>Wed, 18 Oct 2017 15:16:04 GMT</d:getlastmodified>' \
+                  '<d:getetag>ab0b4b7973803c03639b848682b5f38c</d:getetag><d:getcontenttype>text/plain' \
+                  '</d:getcontenttype><d:getcontentlength>41</d:getcontentlength><d:displayname>test.txt' \
+                  '</d:displayname><d:creationdate>2017-10-18T15:16:04Z</d:creationdate></d:prop></d:propstat>' \
+                  '</d:response></d:multistatus>'
+        result = utils.parse_info_response(content, '/test_dir/test.txt', 'localhost')
+        self.assertEquals(result['created'], '2017-10-18T15:16:04Z')
+        self.assertEquals(result['name'], 'test.txt')
+        self.assertEquals(result['modified'], 'Wed, 18 Oct 2017 15:16:04 GMT')
+        self.assertEquals(result['size'], '41')
+
     def test_create_get_property_request_content(self):
         option = {
             'namespace': 'test',

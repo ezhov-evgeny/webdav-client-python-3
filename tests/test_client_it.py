@@ -102,7 +102,6 @@ class ClientTestCase(TestCase):
         buff = StringIO(u'test content for testing of webdav client')
         self.client.upload_to(buff=buff, remote_path=self.remote_path_file)
         self.assertTrue(self.client.check(self.remote_path_file), 'Expected the file is uploaded.')
-        self.test_download_to()
 
     def test_upload(self):
         self._prepare_for_uploading()
@@ -146,6 +145,20 @@ class ClientTestCase(TestCase):
         self.assertFalse(self.client.check(remote_path=self.remote_path_file))
         self.assertTrue(self.client.check(remote_path=self.remote_path_file2))
 
+    def test_clean(self):
+        self._prepare_for_downloading()
+        self.client.clean(remote_path=self.remote_path_dir)
+        self.assertFalse(self.client.check(remote_path=self.remote_path_file))
+        self.assertFalse(self.client.check(remote_path=self.remote_path_dir))
+
+    def test_info(self):
+        self._prepare_for_downloading()
+        result = self.client.info(remote_path=self.remote_path_file)
+        self.assertEquals(result['name'], 'test.txt')
+        self.assertEquals(result['size'], '41')
+        self.assertTrue('created' in result)
+        self.assertTrue('modified' in result)
+
     def test_get_property(self):
         self._prepare_for_downloading()
         result = self.client.get_property(remote_path=self.remote_path_file, option={'name': 'aProperty'})
@@ -169,8 +182,6 @@ class ClientTestCase(TestCase):
             self.client.upload_file(remote_path=self.remote_path_file, local_path=self.local_path_file)
 
     def _prepare_for_uploading(self):
-        if self.client.check(remote_path=self.remote_path_file):
-            self.client.clean(remote_path=self.remote_path_file)
         if not self.client.check(remote_path=self.remote_path_dir):
             self.client.mkdir(remote_path=self.remote_path_dir)
         if not path.exists(path=self.local_path_dir):
