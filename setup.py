@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 from setuptools.command.install import install as InstallCommand
 from setuptools.command.test import test as TestCommand
 
-version = "0.3"
+version = "0.4"
 requirements = "libxml2-dev libxslt-dev python-dev"
 
 
@@ -51,7 +51,8 @@ setup(
     scripts=['wdc'],
     tests_require=['pytest', 'pyhamcrest', 'junit-xml', 'pytest-allure-adaptor'],
     cmdclass={'install': Install, 'test': Test},
-    description='WebDAV client, based on original package https://github.com/designerror/webdav-client-python but uses requests instead of PyCURL',
+    description='WebDAV client, based on original package https://github.com/designerror/webdav-client-python but '
+                'uses requests instead of PyCURL',
     long_description=open('README.rst').read(),
     author='Evgeny Ezhov',
     author_email='ezhov.evgeny@gmail.com',
