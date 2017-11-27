@@ -68,10 +68,11 @@ def wrap_connection_error(fn):
         try:
             res = fn(self, *args, **kw)
         except requests.ConnectionError:
-            raise NotConnection(self.webdav.hostname)
+            raise NoConnection(self.webdav.hostname)
+        except requests.RequestException as re:
+            raise ConnectionException(re)
         else:
             return res
-
     return _wrapper
 
 
@@ -83,6 +84,9 @@ class Client(object):
 
     # Max size of file for uploading
     large_size = 2 * 1024 * 1024 * 1024
+
+    # request timeout in seconds
+    timeout = 30
 
     # HTTP headers for different actions
     http_header = {
@@ -155,6 +159,7 @@ class Client(object):
             url=self.get_url(path),
             auth=(self.webdav.login, self.webdav.password),
             headers=self.get_headers(action, headers_ext),
+            timeout=self.timeout,
             data=data
         )
         if response.status_code == 507:

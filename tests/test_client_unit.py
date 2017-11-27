@@ -1,3 +1,4 @@
+import unittest
 from unittest import TestCase
 
 from lxml.etree import ElementTree, Element
@@ -93,3 +94,7 @@ class ClientTestCase(TestCase):
         tree = ElementTree(Element('test'))
         result = utils.etree_to_string(tree)
         self.assertEquals(result, '<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n<test/>')
+
+
+if __name__ == '__main__':
+    unittest.main()

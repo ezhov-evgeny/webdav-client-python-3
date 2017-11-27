@@ -1,5 +1,6 @@
 import os.path
 import shutil
+import unittest
 from io import BytesIO, StringIO
 from os import path
 from unittest import TestCase
@@ -188,3 +189,7 @@ class ClientTestCase(TestCase):
             os.mkdir(self.local_path_dir)
         if not path.exists(path=self.local_path_dir + os.sep + self.local_path_file):
             shutil.copy(src=self.local_path_file, dst=self.local_path_dir + os.sep + self.local_path_file)
+
+
+if __name__ == '__main__':
+    unittest.main()

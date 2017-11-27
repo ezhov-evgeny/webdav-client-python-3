@@ -71,12 +71,29 @@ class MethodNotSupported(WebDavException):
         return "Method {name} not supported for {server}".format(name=self.name, server=self.server)
 
 
-class NotConnection(WebDavException):
+class ConnectionException(WebDavException):
+    def __init__(self, exception):
+        self.exception = exception
+
+    def __str__(self):
+        return self.exception.__str__()
+
+
+class NoConnection(WebDavException):
     def __init__(self, hostname):
         self.hostname = hostname
 
     def __str__(self):
         return "Not connection with {hostname}".format(hostname=self.hostname)
+
+
+# This exception left only for supporting original library interface.
+class NotConnection(WebDavException):
+    def __init__(self, hostname):
+        self.hostname = hostname
+
+    def __str__(self):
+        return "No connection with {hostname}".format(hostname=self.hostname)
 
 
 class ResponseErrorCode(WebDavException):
