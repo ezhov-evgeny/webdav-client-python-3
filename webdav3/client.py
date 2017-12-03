@@ -575,7 +575,6 @@ class Client(object):
         path = self.get_full_path(urn)
         return WebDavXmlUtils.parse_info_response(content=response.content, path=path, hostname=self.webdav.hostname)
 
-    # TODO refactor code below and write tests for it.
     @wrap_connection_error
     def is_dir(self, remote_path):
         """Checks is the remote resource directory.
@@ -623,11 +622,24 @@ class Client(object):
                        `name`: the name of property which will be set,
                        `value`: (optional) the value of property which will be set. Defaults is empty string.
         """
+        self.set_property_batch(remote_path=remote_path, option=[option])
+
+    @wrap_connection_error
+    def set_property_batch(self, remote_path, option):
+        """Sets batch metadata properties of remote resource on WebDAV server in batch.
+        More information you can find by link http://webdav.org/specs/rfc4918.html#METHOD_PROPPATCH
+
+        :param remote_path: the path to remote resource.
+        :param option: the property attributes as list of dictionaries with following keys:
+                       `namespace`: (optional) the namespace for XML property which will be set,
+                       `name`: the name of property which will be set,
+                       `value`: (optional) the value of property which will be set. Defaults is empty string.
+        """
         urn = Urn(remote_path)
         if not self.check(urn.path()):
             raise RemoteResourceNotFound(urn.path())
 
-        data = WebDavXmlUtils.create_set_property_request_content(option)
+        data = WebDavXmlUtils.create_set_property_batch_request_content(option)
         self.execute_request(action='set_property', path=urn.quote(), data=data)
 
     def resource(self, remote_path):
@@ -874,10 +886,10 @@ class WebDavXmlUtils:
         :return: True in case the remote resource is directory and False otherwise.
         """
         response = WebDavXmlUtils.extract_response_for_path(content=content, path=path, hostname=hostname)
-        type = response.find(".//{DAV:}resourcetype")
-        if type is None:
-            raise MethodNotSupported(name="is_dir", server=self.webdav.hostname)
-        dir_type = type.find("{DAV:}collection")
+        resource_type = response.find(".//{DAV:}resourcetype")
+        if resource_type is None:
+            raise MethodNotSupported(name="is_dir", server=hostname)
+        dir_type = resource_type.find("{DAV:}collection")
 
         return True if dir_type is not None else False
 
@@ -908,10 +920,10 @@ class WebDavXmlUtils:
         return tree.xpath('//*[local-name() = $name]', name=name)[0].text
 
     @staticmethod
-    def create_set_property_request_content(option):
-        """Creates an XML for requesting of setting a property value for remote WebDAV resource.
+    def create_set_property_batch_request_content(options):
+        """Creates an XML for requesting of setting a property values for remote WebDAV resource in batch.
 
-        :param option: the property attributes as dictionary with following keys:
+        :param options: the property attributes as list of dictionaries with following keys:
                        `namespace`: (optional) the namespace for XML property which will be set,
                        `name`: the name of property which will be set,
                        `value`: (optional) the value of property which will be set. Defaults is empty string.
@@ -920,8 +932,9 @@ class WebDavXmlUtils:
         root_node = etree.Element('propertyupdate', xmlns='DAV:')
         set_node = etree.SubElement(root_node, 'set')
         prop_node = etree.SubElement(set_node, 'prop')
-        opt_node = etree.SubElement(prop_node, option['name'], xmlns=option.get('namespace', ''))
-        opt_node.text = option.get('value', '')
+        for option in options:
+            opt_node = etree.SubElement(prop_node, option['name'], xmlns=option.get('namespace', ''))
+            opt_node.text = option.get('value', '')
         tree = etree.ElementTree(root_node)
         return WebDavXmlUtils.etree_to_string(tree)
 

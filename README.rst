@@ -7,10 +7,14 @@ But uses `requests` instead of `PyCURL`
 
 Release Notes
 =============
+
+Version 0.5 – 03.12.2017
+* Added method for setting of WebDAV resource property values in batch
+
 Version 0.4 - 27.11.2017
 * Refactoring of WebDAV client and making it works in following methods:
     - Checking is remote resource directory
-    - Fixed problem when connection lost during request executing and nothing was happened, now it raises an exception.
+    - Fixed problem when connection lost during request executing and nothing was happened, now it raises an exception
 
 Version 0.3 - 18.10.2017
 * Refactoring of WebDAV client and making it works in following methods:

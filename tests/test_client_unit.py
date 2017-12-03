@@ -72,23 +72,55 @@ class ClientTestCase(TestCase):
         result = utils.parse_get_property_response(content=content, name='aProperty')
         self.assertEquals(result, 'aValue')
 
-    def test_create_set_property_request_content(self):
+    def test_create_set_one_property_request_content(self):
         option = {
             'namespace': 'test',
             'name': 'aProperty',
             'value': 'aValue'
         }
-        result = utils.create_set_property_request_content(option=option)
+        result = utils.create_set_property_batch_request_content(options=[option])
         self.assertEquals(result, '<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n<propertyupdate xmlns="DAV:"><set><prop>'
                                   '<aProperty xmlns="test">aValue</aProperty></prop></set></propertyupdate>')
 
-    def test_create_set_property_request_content_name_only(self):
+    def test_create_set_one_property_request_content_name_only(self):
         option = {
             'name': 'aProperty'
         }
-        result = utils.create_set_property_request_content(option=option)
+        result = utils.create_set_property_batch_request_content(options=[option])
         self.assertEquals(result, '<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n<propertyupdate xmlns="DAV:"><set><prop>'
                                   '<aProperty xmlns=""></aProperty></prop></set></propertyupdate>')
+
+    def test_create_set_property_batch_request_content(self):
+        options = [
+            {
+                'namespace': 'test',
+                'name': 'aProperty',
+                'value': 'aValue'
+            },
+            {
+                'namespace': 'test2',
+                'name': 'aProperty2',
+                'value': 'aValue2'
+            }
+        ]
+        result = utils.create_set_property_batch_request_content(options=options)
+        self.assertEquals(result, '<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n<propertyupdate xmlns="DAV:"><set><prop>'
+                                  '<aProperty xmlns="test">aValue</aProperty><aProperty2 xmlns="test2">aValue2'
+                                  '</aProperty2></prop></set></propertyupdate>')
+
+    def test_create_set_property_batch_request_content_name_only(self):
+        options = [
+            {
+                'name': 'aProperty'
+            },
+            {
+                'name': 'aProperty2'
+            }
+        ]
+        result = utils.create_set_property_batch_request_content(options=options)
+        self.assertEquals(result, '<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n<propertyupdate xmlns="DAV:"><set><prop>'
+                                  '<aProperty xmlns=""></aProperty><aProperty2 xmlns=""></aProperty2></prop></set>'
+                                  '</propertyupdate>')
 
     def test_etree_to_string(self):
         tree = ElementTree(Element('test'))

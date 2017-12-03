@@ -160,10 +160,18 @@ class ClientTestCase(TestCase):
         self.assertTrue('created' in result)
         self.assertTrue('modified' in result)
 
-    def test_get_property(self):
+    def test_directory_is_dir(self):
+        self._prepare_for_downloading()
+        self.assertTrue(self.client.is_dir(self.remote_path_dir), 'Should return True for directory')
+
+    def test_file_is_not_dir(self):
+        self._prepare_for_downloading()
+        self.assertFalse(self.client.is_dir(self.remote_path_file), 'Should return False for file')
+
+    def test_get_property_of_non_exist(self):
         self._prepare_for_downloading()
         result = self.client.get_property(remote_path=self.remote_path_file, option={'name': 'aProperty'})
-        self.assertEquals(result, None)
+        self.assertEquals(result, None, 'For not found property should return value as None')
 
     def test_set_property(self):
         self._prepare_for_downloading()
@@ -174,7 +182,28 @@ class ClientTestCase(TestCase):
         })
         result = self.client.get_property(remote_path=self.remote_path_file,
                                           option={'namespace': 'test', 'name': 'aProperty'})
-        self.assertEquals(result, "aValue")
+        self.assertEquals(result, 'aValue', 'Property value should be set')
+
+    def test_set_property_batch(self):
+        self._prepare_for_downloading()
+        self.client.set_property_batch(remote_path=self.remote_path_file, option=[
+            {
+                'namespace': 'test',
+                'name': 'aProperty',
+                'value': 'aValue'
+            },
+            {
+                'namespace': 'test',
+                'name': 'aProperty2',
+                'value': 'aValue2'
+            }
+        ])
+        result = self.client.get_property(remote_path=self.remote_path_file,
+                                          option={'namespace': 'test', 'name': 'aProperty'})
+        self.assertEquals(result, 'aValue', 'First property value should be set')
+        result = self.client.get_property(remote_path=self.remote_path_file,
+                                          option={'namespace': 'test', 'name': 'aProperty2'})
+        self.assertEquals(result, 'aValue2', 'Second property value should be set')
 
     def _prepare_for_downloading(self):
         if not self.client.check(remote_path=self.remote_path_dir):
