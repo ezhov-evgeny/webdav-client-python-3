@@ -8,6 +8,9 @@ But uses `requests` instead of `PyCURL`
 Release Notes
 =============
 
+Version 0.6 – 21.03.2018
+* Fixed issue with in extracting response for path
+
 Version 0.5 – 03.12.2017
 * Added method for setting of WebDAV resource property values in batch
 
