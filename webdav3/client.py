@@ -966,7 +966,9 @@ class WebDavXmlUtils:
                 urn = unquote(href)
 
                 if path[-1] == Urn.separate:
-                    if not path == urn:
+                    # remove / from path to compare with urn
+                    # e.g. /path = /path
+                    if not path[:-1] == urn:
                         continue
                 else:
                     path_with_sep = "{path}{sep}".format(path=path, sep=Urn.separate)
