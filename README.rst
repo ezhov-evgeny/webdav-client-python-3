@@ -9,10 +9,10 @@ Release Notes
 =============
 
 Version 0.6.1 – 16.03.2018
-* Fixed issue with wrong argument for resource creation
+* Fixed issue with wrong argument for resource creation by https://github.com/janLo
 
 Version 0.6 – 21.02.2018
-* Fixed issue with in extracting response for path
+* Fixed issue with in extracting response for path by https://github.com/mightydok
 
 Version 0.5 – 03.12.2017
 * Added method for setting of WebDAV resource property values in batch
