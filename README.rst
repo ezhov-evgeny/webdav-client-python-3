@@ -8,7 +8,10 @@ But uses `requests` instead of `PyCURL`
 Release Notes
 =============
 
-Version 0.6 – 21.03.2018
+Version 0.6.1 – 16.03.2018
+* Fixed issue with wrong argument for resource creation
+
+Version 0.6 – 21.02.2018
 * Fixed issue with in extracting response for path
 
 Version 0.5 – 03.12.2017
