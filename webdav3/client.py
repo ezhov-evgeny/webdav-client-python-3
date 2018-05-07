@@ -16,9 +16,10 @@ from webdav3.exceptions import *
 from webdav3.urn import Urn
 
 try:
-    from urllib.parse import unquote
+    from urllib.parse import unquote, urlsplit
 except ImportError:
     from urllib import unquote
+    from urlparse import urlsplit
 
 __version__ = "0.2"
 log = logging.getLogger(__name__)
@@ -961,20 +962,20 @@ class WebDavXmlUtils:
         try:
             tree = etree.fromstring(content)
             responses = tree.findall("{DAV:}response")
+
+            def normalization_fn(p):
+                result = (sub, '/{2,}', '/')
+                return result if result[-1] != Urn.separate else result[:-1]
+
+            normalized_path = normalization_fn(path)
+
             for resp in responses:
                 href = resp.findtext("{DAV:}href")
-                urn = unquote(href)
 
-                if path[-1] == Urn.separate:
-                    # remove / from path to compare with urn
-                    # e.g. /path = /path
-                    if not path[:-1] == urn:
-                        continue
-                else:
-                    path_with_sep = "{path}{sep}".format(path=path, sep=Urn.separate)
-                    if not path == urn and not path_with_sep == urn:
-                        continue
-                return resp
+                urn = unquote(urlsplit(href).path)
+
+                if normalized_path == normalization_fn(urn):
+                    return resp
             raise RemoteResourceNotFound(path)
         except etree.XMLSyntaxError:
             raise MethodNotSupported(name="is_dir", server=hostname)
