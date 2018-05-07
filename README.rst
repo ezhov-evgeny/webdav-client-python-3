@@ -8,6 +8,9 @@ But uses `requests` instead of `PyCURL`
 Release Notes
 =============
 
+Version 0.8 – 07.05.2018
+* Fixed issue in extract_response_for_path when a link in "href" attribute is an absolute link by https://github.com/a1ezzz
+
 Version 0.7 – 16.03.2018
 * Fixed issue with wrong argument for resource creation by https://github.com/janLo
 
