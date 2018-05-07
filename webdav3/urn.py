@@ -1,7 +1,8 @@
 try:
-    from urllib.parse import unquote, quote
+    from urllib.parse import unquote, quote, urlsplit
 except ImportError:
     from urllib import unquote, quote
+    from urlparse import urlsplit
 
 from re import sub
 
@@ -54,3 +55,13 @@ class Urn(object):
 
     def is_dir(self):
         return self._path[-1] == Urn.separate
+
+    @staticmethod
+    def normalize_path(path):
+        result = sub('/{2,}', '/', path)
+        return result if len(result) < 1 or result[-1] != Urn.separate else result[:-1]
+
+    @staticmethod
+    def compare_path(path_a, href):
+        unqouted_path = Urn.separate + unquote(urlsplit(href).path)
+        return Urn.normalize_path(path_a) == Urn.normalize_path(unqouted_path)

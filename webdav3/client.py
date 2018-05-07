@@ -246,8 +246,8 @@ class Client(object):
         response = self.execute_request(action='list', path=directory_urn.quote())
         urns = WebDavXmlUtils.parse_get_list_response(response.content)
 
-        path = self.get_full_path(directory_urn)
-        return [urn.filename() for urn in urns if urn.path() != path and urn.path() != path[:-1]]
+        path = Urn.normalize_path(self.get_full_path(directory_urn))
+        return [urn.filename() for urn in urns if Urn.compare_path(path, urn.path()) is False]
 
     @wrap_connection_error
     def free(self):
@@ -814,7 +814,7 @@ class WebDavXmlUtils:
         """
         try:
             tree = etree.fromstring(content)
-            hrees = [unquote(hree.text) for hree in tree.findall(".//{DAV:}href")]
+            hrees = [Urn.separate + unquote(urlsplit(hree.text).path) for hree in tree.findall(".//{DAV:}href")]
             return [Urn(hree) for hree in hrees]
         except etree.XMLSyntaxError:
             return list()
@@ -963,18 +963,12 @@ class WebDavXmlUtils:
             tree = etree.fromstring(content)
             responses = tree.findall("{DAV:}response")
 
-            def normalization_fn(p):
-                result = (sub, '/{2,}', '/')
-                return result if result[-1] != Urn.separate else result[:-1]
-
-            normalized_path = normalization_fn(path)
+            n_path = Urn.normalize_path(path)
 
             for resp in responses:
                 href = resp.findtext("{DAV:}href")
 
-                urn = unquote(urlsplit(href).path)
-
-                if normalized_path == normalization_fn(urn):
+                if Urn.compare_path(n_path, href) is True:
                     return resp
             raise RemoteResourceNotFound(path)
         except etree.XMLSyntaxError:
