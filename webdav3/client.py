@@ -284,7 +284,7 @@ class Client(object):
         More information you can find by link http://webdav.org/specs/rfc4918.html#METHOD_MKCOL
 
         :param remote_path: path to directory
-        :return: True if request executed with code 200 and False otherwise.
+        :return: True if request executed with code 200 or 201 and False otherwise.
 
         """
         directory_urn = Urn(remote_path, directory=True)
@@ -292,7 +292,7 @@ class Client(object):
             raise RemoteParentNotFound(directory_urn.path())
 
         response = self.execute_request(action='mkdir', path=directory_urn.quote())
-        return response.status_code == 200
+        return response.status_code in (200, 201)
 
     @wrap_connection_error
     def download_from(self, buff, remote_path):
