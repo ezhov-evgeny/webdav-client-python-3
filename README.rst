@@ -12,11 +12,12 @@ Release Notes
 =============
 
 **Version 0.9 – 10.05.2018**
+ * Client.mkdir now accepts 201 HTTP-code by https://github.com/a1ezzz
  * Tests are updated
  * Added Travis-CI
 
 **Version 0.8 – 07.05.2018**
- *     Fixed issue in extract_response_for_path when a link in "href" attribute is an absolute link by https://github.com/a1ezzz
+ * Fixed issue in extract_response_for_path when a link in "href" attribute is an absolute link by https://github.com/a1ezzz
 
 **Version 0.7 – 16.03.2018**
  * Fixed issue with wrong argument for resource creation by https://github.com/janLo
