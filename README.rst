@@ -1,10 +1,8 @@
-webdavclient3
+webdavclient3 [![Build Status](https://travis-ci.com/ezhov-evgeny/webdav-client-python-3.svg?branch=master)](https://travis-ci.com/ezhov-evgeny/webdav-client-python-3)
 =============
 
 Based on https://github.com/designerror/webdav-client-python
 But uses `requests` instead of `PyCURL`
-
-[![Build Status](https://travis-ci.com/ezhov-evgeny/webdav-client-python-3.svg?branch=master)](https://travis-ci.com/ezhov-evgeny/webdav-client-python-3)
 
 Release Notes
 =============
