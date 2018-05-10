@@ -19,7 +19,7 @@ class ClientTestCase(TestCase):
     def setUp(self):
         options = {
             'webdav_hostname': 'https://webdav.yandex.ru',
-            'webdav_login': 'webdavclient.test',
+            'webdav_login': 'webdavclient.test2',
             'webdav_password': 'Qwerty123!'
         }
         self.client = Client(options)
@@ -210,6 +210,8 @@ class ClientTestCase(TestCase):
             self.client.mkdir(remote_path=self.remote_path_dir)
         if not self.client.check(remote_path=self.remote_path_file):
             self.client.upload_file(remote_path=self.remote_path_file, local_path=self.local_path_file)
+        if not path.exists(self.local_path_dir):
+            os.mkdir(self.local_path_dir)
 
     def _prepare_for_uploading(self):
         if not self.client.check(remote_path=self.remote_path_dir):
