@@ -4,9 +4,14 @@ webdavclient3
 Based on https://github.com/designerror/webdav-client-python
 But uses `requests` instead of `PyCURL`
 
+[![Build Status](https://travis-ci.com/ezhov-evgeny/webdav-client-python-3.svg?branch=master)](https://travis-ci.com/ezhov-evgeny/webdav-client-python-3)
 
 Release Notes
 =============
+
+Version 0.9 – 07.05.2018
+* Tests are updated
+* Added Travis-CI
 
 Version 0.8 – 07.05.2018
 * Fixed issue in extract_response_for_path when a link in "href" attribute is an absolute link by https://github.com/a1ezzz
