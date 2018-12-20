@@ -49,19 +49,6 @@ class RemoteParentNotFound(NotFound):
         return "Remote parent for: {path} not found".format(path=self.path)
 
 
-class ResourceTooBig(WebDavException):
-    def __init__(self, path, size, max_size):
-        self.path = path
-        self.size = size
-        self.max_size = max_size
-
-    def __str__(self):
-        return "Resource {path} is too big, it should be less then {max_size} but actually: {size}".format(
-            path=self.path,
-            max_size=self.max_size,
-            size=self.size)
-
-
 class MethodNotSupported(WebDavException):
     def __init__(self, name, server):
         self.name = name
