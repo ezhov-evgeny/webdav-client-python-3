@@ -18,21 +18,21 @@ class ClientTestCase(TestCase):
                   '<d:getlastmodified>Mon, 16 Oct 2017 04:18:18 GMT</d:getlastmodified><d:displayname>test.txt' \
                   '</d:displayname><d:creationdate>2017-10-16T04:18:18Z</d:creationdate></d:prop></d:propstat>' \
                   '</d:response></d:multistatus>'
-        result = utils.parse_get_list_response(content)
-        self.assertEquals(result.__len__(), 2)
+        result = utils.parse_get_list_response(content.encode('utf-8'))
+        self.assertEqual(result.__len__(), 2)
 
     def test_create_free_space_request_content(self):
         result = utils.create_free_space_request_content()
-        self.assertEquals(result, '<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n<propfind xmlns="DAV:"><prop>'
-                                  '<quota-available-bytes/><quota-used-bytes/></prop></propfind>')
+        self.assertEqual(result, b'<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n<propfind xmlns="DAV:"><prop>'
+                                  b'<quota-available-bytes/><quota-used-bytes/></prop></propfind>')
 
     def test_parse_free_space_response(self):
         content = '<?xml version="1.0" encoding="utf-8"?><d:multistatus xmlns:d="DAV:"><d:response><d:href>/</d:href>' \
                   '<d:propstat><d:status>HTTP/1.1 200 OK</d:status><d:prop><d:quota-used-bytes>697' \
                   '</d:quota-used-bytes><d:quota-available-bytes>10737417543</d:quota-available-bytes></d:prop>' \
                   '</d:propstat></d:response></d:multistatus>'
-        result = utils.parse_free_space_response(content, 'localhost')
-        self.assertEquals(result, 10737417543)
+        result = utils.parse_free_space_response(content.encode('utf-8'), 'localhost')
+        self.assertEqual(result, 10737417543)
 
     def test_parse_info_response(self):
         content = '<?xml version="1.0" encoding="utf-8"?><d:multistatus xmlns:d="DAV:"><d:response>' \
@@ -42,11 +42,11 @@ class ClientTestCase(TestCase):
                   '</d:getcontenttype><d:getcontentlength>41</d:getcontentlength><d:displayname>test.txt' \
                   '</d:displayname><d:creationdate>2017-10-18T15:16:04Z</d:creationdate></d:prop></d:propstat>' \
                   '</d:response></d:multistatus>'
-        result = utils.parse_info_response(content, '/test_dir/test.txt', 'localhost')
-        self.assertEquals(result['created'], '2017-10-18T15:16:04Z')
-        self.assertEquals(result['name'], 'test.txt')
-        self.assertEquals(result['modified'], 'Wed, 18 Oct 2017 15:16:04 GMT')
-        self.assertEquals(result['size'], '41')
+        result = utils.parse_info_response(content.encode('utf-8'), '/test_dir/test.txt', 'localhost')
+        self.assertEqual(result['created'], '2017-10-18T15:16:04Z')
+        self.assertEqual(result['name'], 'test.txt')
+        self.assertEqual(result['modified'], 'Wed, 18 Oct 2017 15:16:04 GMT')
+        self.assertEqual(result['size'], '41')
 
     def test_create_get_property_request_content(self):
         option = {
@@ -54,24 +54,24 @@ class ClientTestCase(TestCase):
             'name': 'aProperty'
         }
         result = utils.create_get_property_request_content(option=option, )
-        self.assertEquals(result, '<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n<propfind xmlns="DAV:"><prop>'
-                                  '<aProperty xmlns="test"/></prop></propfind>')
+        self.assertEqual(result, b'<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n<propfind xmlns="DAV:"><prop>'
+                                  b'<aProperty xmlns="test"/></prop></propfind>')
 
     def test_create_get_property_request_content_name_only(self):
         option = {
             'name': 'aProperty'
         }
         result = utils.create_get_property_request_content(option=option)
-        self.assertEquals(result, '<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n<propfind xmlns="DAV:"><prop>'
-                                  '<aProperty xmlns=""/></prop></propfind>')
+        self.assertEqual(result, b'<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n<propfind xmlns="DAV:"><prop>'
+                                  b'<aProperty xmlns=""/></prop></propfind>')
 
     def test_parse_get_property_response(self):
         content = '<?xml version="1.0" encoding="utf-8"?><d:multistatus xmlns:d="DAV:"><d:response>' \
                   '<d:href>/test_dir/test.txt</d:href><d:propstat><d:status>HTTP/1.1 200 OK</d:status><d:prop>' \
                   '<aProperty xmlns="test">aValue</aProperty></d:prop></d:propstat></d:response></d:multistatus>'
 
-        result = utils.parse_get_property_response(content=content, name='aProperty')
-        self.assertEquals(result, 'aValue')
+        result = utils.parse_get_property_response(content=content.encode('utf-8'), name='aProperty')
+        self.assertEqual(result, 'aValue')
 
     def test_create_set_one_property_request_content(self):
         option = {
@@ -80,16 +80,16 @@ class ClientTestCase(TestCase):
             'value': 'aValue'
         }
         result = utils.create_set_property_batch_request_content(options=[option])
-        self.assertEquals(result, '<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n<propertyupdate xmlns="DAV:"><set><prop>'
-                                  '<aProperty xmlns="test">aValue</aProperty></prop></set></propertyupdate>')
+        self.assertEqual(result, b'<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n<propertyupdate xmlns="DAV:"><set><prop>'
+                                  b'<aProperty xmlns="test">aValue</aProperty></prop></set></propertyupdate>')
 
     def test_create_set_one_property_request_content_name_only(self):
         option = {
             'name': 'aProperty'
         }
         result = utils.create_set_property_batch_request_content(options=[option])
-        self.assertEquals(result, '<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n<propertyupdate xmlns="DAV:"><set><prop>'
-                                  '<aProperty xmlns=""></aProperty></prop></set></propertyupdate>')
+        self.assertEqual(result, b'<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n<propertyupdate xmlns="DAV:"><set><prop>'
+                                  b'<aProperty xmlns=""></aProperty></prop></set></propertyupdate>')
 
     def test_create_set_property_batch_request_content(self):
         options = [
@@ -105,9 +105,9 @@ class ClientTestCase(TestCase):
             }
         ]
         result = utils.create_set_property_batch_request_content(options=options)
-        self.assertEquals(result, '<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n<propertyupdate xmlns="DAV:"><set><prop>'
-                                  '<aProperty xmlns="test">aValue</aProperty><aProperty2 xmlns="test2">aValue2'
-                                  '</aProperty2></prop></set></propertyupdate>')
+        self.assertEqual(result, b'<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n<propertyupdate xmlns="DAV:"><set><prop>'
+                                  b'<aProperty xmlns="test">aValue</aProperty><aProperty2 xmlns="test2">aValue2'
+                                  b'</aProperty2></prop></set></propertyupdate>')
 
     def test_create_set_property_batch_request_content_name_only(self):
         options = [
@@ -119,14 +119,14 @@ class ClientTestCase(TestCase):
             }
         ]
         result = utils.create_set_property_batch_request_content(options=options)
-        self.assertEquals(result, '<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n<propertyupdate xmlns="DAV:"><set><prop>'
-                                  '<aProperty xmlns=""></aProperty><aProperty2 xmlns=""></aProperty2></prop></set>'
-                                  '</propertyupdate>')
+        self.assertEqual(result, b'<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n<propertyupdate xmlns="DAV:"><set><prop>'
+                                  b'<aProperty xmlns=""></aProperty><aProperty2 xmlns=""></aProperty2></prop></set>'
+                                  b'</propertyupdate>')
 
     def test_etree_to_string(self):
         tree = ElementTree(Element('test'))
         result = utils.etree_to_string(tree)
-        self.assertEquals(result, '<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n<test/>')
+        self.assertEqual(result, b'<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n<test/>')
 
     def test_parse_is_dir_response_directory(self):
         content = '<?xml version=\'1.0\' encoding=\'UTF-8\'?><d:multistatus xmlns:d="DAV:"><d:response><d:href>/</d:h' \
@@ -175,7 +175,7 @@ class ClientTestCase(TestCase):
                   '</d:response></d:multistatus>'
         path = '/test_dir'
         hostname = 'https://webdav.yandex.ru'
-        result = utils.parse_is_dir_response(content, path, hostname)
+        result = utils.parse_is_dir_response(content.encode('utf-8'), path, hostname)
         self.assertTrue(result, 'It should be directory')
 
     def test_parse_is_dir_response_directory(self):
@@ -190,7 +190,7 @@ class ClientTestCase(TestCase):
                   'th><d:resourcetype/></d:prop></d:propstat></d:response></d:multistatus>'
         path = '/test_dir/test.txt'
         hostname = 'https://webdav.yandex.ru'
-        result = utils.parse_is_dir_response(content, path, hostname)
+        result = utils.parse_is_dir_response(content.encode('utf-8'), path, hostname)
         self.assertFalse(result, 'It should be file')
 
 
