@@ -83,9 +83,6 @@ class Client(object):
     # path to root directory of WebDAV
     root = '/'
 
-    # Max size of file for uploading
-    large_size = 2 * 1024 * 1024 * 1024
-
     # request timeout in seconds
     timeout = 30
 
@@ -475,11 +472,7 @@ class Client(object):
             raise RemoteParentNotFound(urn.path())
 
         with open(local_path, "rb") as local_file:
-            file_size = os.path.getsize(local_path)
-            if file_size > self.large_size:
-                raise ResourceTooBig(path=local_path, size=file_size, max_size=self.large_size)
-
-            self.execute_request(action='upload', path=urn.quote(), data=local_file)
+          self.execute_request(action='upload', path=urn.quote(), data=local_file)
 
     def upload_sync(self, remote_path, local_path, callback=None):
         """Uploads resource to remote path on WebDAV server synchronously.
