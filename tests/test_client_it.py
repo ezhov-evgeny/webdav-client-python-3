@@ -60,7 +60,7 @@ class ClientTestCase(TestCase):
         self._prepare_for_downloading()
         buff = BytesIO()
         self.client.download_from(buff=buff, remote_path=self.remote_path_file)
-        self.assertEquals(buff.getvalue(), 'test content for testing of webdav client')
+        self.assertEqual(buff.getvalue(), 'test content for testing of webdav client')
 
     @unittest.skip("Yandex brakes response for file it contains property resourcetype as collection but it should "
                    "be empty for file")
@@ -110,7 +110,8 @@ class ClientTestCase(TestCase):
 
     def test_upload_from(self):
         self._prepare_for_uploading()
-        buff = StringIO(u'test content for testing of webdav client')
+        buff = StringIO()
+        buff.write(u'test content for testing of webdav client')
         self.client.upload_to(buff=buff, remote_path=self.remote_path_file)
         self.assertTrue(self.client.check(self.remote_path_file), 'Expected the file is uploaded.')
 
@@ -165,8 +166,8 @@ class ClientTestCase(TestCase):
     def test_info(self):
         self._prepare_for_downloading()
         result = self.client.info(remote_path=self.remote_path_file)
-        self.assertEquals(result['name'], 'test.txt')
-        self.assertEquals(result['size'], '41')
+        self.assertEqual(result['name'], 'test.txt')
+        self.assertEqual(result['size'], '41')
         self.assertTrue('created' in result)
         self.assertTrue('modified' in result)
 
@@ -181,7 +182,7 @@ class ClientTestCase(TestCase):
     def test_get_property_of_non_exist(self):
         self._prepare_for_downloading()
         result = self.client.get_property(remote_path=self.remote_path_file, option={'name': 'aProperty'})
-        self.assertEquals(result, None, 'For not found property should return value as None')
+        self.assertEqual(result, None, 'For not found property should return value as None')
 
     def test_set_property(self):
         self._prepare_for_downloading()
@@ -192,7 +193,7 @@ class ClientTestCase(TestCase):
         })
         result = self.client.get_property(remote_path=self.remote_path_file,
                                           option={'namespace': 'test', 'name': 'aProperty'})
-        self.assertEquals(result, 'aValue', 'Property value should be set')
+        self.assertEqual(result, 'aValue', 'Property value should be set')
 
     def test_set_property_batch(self):
         self._prepare_for_downloading()
@@ -210,10 +211,10 @@ class ClientTestCase(TestCase):
         ])
         result = self.client.get_property(remote_path=self.remote_path_file,
                                           option={'namespace': 'test', 'name': 'aProperty'})
-        self.assertEquals(result, 'aValue', 'First property value should be set')
+        self.assertEqual(result, 'aValue', 'First property value should be set')
         result = self.client.get_property(remote_path=self.remote_path_file,
                                           option={'namespace': 'test', 'name': 'aProperty2'})
-        self.assertEquals(result, 'aValue2', 'Second property value should be set')
+        self.assertEqual(result, 'aValue2', 'Second property value should be set')
 
     def _prepare_for_downloading(self):
         if not self.client.check(remote_path=self.remote_path_dir):
