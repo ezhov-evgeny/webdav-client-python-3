@@ -11,6 +11,12 @@ But uses `requests` instead of `PyCURL`
 Release Notes
 =============
 
+**Version 0.10 – 31.01.2018**
+ * AssertEquals deprecation warnings by https://github.com/StefanZi
+ * Problems with byte/UTF strings and xml library by https://github.com/StefanZi
+ * Add some Eclipse specific files to gitignore by https://github.com/StefanZi
+ * Remove filesize limit by https://github.com/StefanZi
+
 **Version 0.9 – 10.05.2018**
  * Client.mkdir now accepts 201 HTTP-code by https://github.com/a1ezzz
  * Tests are updated
