@@ -158,7 +158,8 @@ class Client(object):
             auth=(self.webdav.login, self.webdav.password),
             headers=self.get_headers(action, headers_ext),
             timeout=self.timeout,
-            data=data
+            data=data,
+            stream=True
         )
         if response.status_code == 507:
             raise NotEnoughSpace()
@@ -306,7 +307,7 @@ class Client(object):
             raise RemoteResourceNotFound(urn.path())
 
         response = self.execute_request(action='download', path=urn.quote())
-        buff.write(response.content)
+        shutil.copyfileobj(response.raw, buff)
 
     def download(self, remote_path, local_path, progress=None):
         """Downloads remote resource from WebDAV and save it in local path.
