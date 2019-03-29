@@ -306,7 +306,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog='wdc', formatter_class=Formatter, epilog=epilog, usage=usage)
     parser.add_argument("action", help=actions_help, choices=actions)
 
-    from webdav.client import __version__ as version
+    from webdav3.client import __version__ as version
     version_text = "{name} {version}".format(name="%(prog)s", version=version)
     parser.add_argument("-v", '--version', action='version', version=version_text)
     parser.add_argument("-r", "--root", help="example: dir1/dir2")
