@@ -11,7 +11,12 @@ But uses `requests` instead of `PyCURL`
 Release Notes
 =============
 
-**Version 0.10 – 31.01.2018**
+**Version 0.11 – 30.03.2019**
+ * Fixed MemoryError if a large file is downloaded with a 32 bit python by https://github.com/bboehmke
+ * Fixed argcomplete is required to run wdc but was not included in the requirements by https://github.com/evanhorn
+ * Fixed wdc tries to import webdav instead of webdav3 by https://github.com/evanhorn
+
+**Version 0.10 – 31.01.2019**
  * AssertEquals deprecation warnings by https://github.com/StefanZi
  * Problems with byte/UTF strings and xml library by https://github.com/StefanZi
  * Add some Eclipse specific files to gitignore by https://github.com/StefanZi
