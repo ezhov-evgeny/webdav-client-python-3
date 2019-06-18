@@ -500,12 +500,13 @@ class Client(object):
         threading.Thread(target=target).start()
 
     @wrap_connection_error
-    def copy(self, remote_path_from, remote_path_to):
+    def copy(self, remote_path_from, remote_path_to, depth=1):
         """Copies resource from one place to another on WebDAV server.
         More information you can find by link http://webdav.org/specs/rfc4918.html#METHOD_COPY
 
         :param remote_path_from: the path to resource which will be copied,
         :param remote_path_to: the path where resource will be copied.
+        :param depth: folder depth to copy
         """
         urn_from = Urn(remote_path_from)
         if not self.check(urn_from.path()):
@@ -516,7 +517,8 @@ class Client(object):
             raise RemoteParentNotFound(urn_to.path())
 
         header_destination = "Destination: {path}".format(path=self.get_full_path(urn_to))
-        self.execute_request(action='copy', path=urn_from.quote(), headers_ext=[header_destination])
+        header_depth = "Depth: {depth}".format(depth=depth)
+        self.execute_request(action='copy', path=urn_from.quote(), headers_ext=[header_destination, header_depth])
 
     @wrap_connection_error
     def move(self, remote_path_from, remote_path_to, overwrite=False):
