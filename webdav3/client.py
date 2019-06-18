@@ -86,6 +86,9 @@ class Client(object):
     # request timeout in seconds
     timeout = 30
 
+    # controls whether to verify the server's TLS certificate or not
+    verify = True
+
     # HTTP headers for different actions
     http_header = {
         'list': ["Accept: */*", "Depth: 1"],
@@ -159,7 +162,8 @@ class Client(object):
             headers=self.get_headers(action, headers_ext),
             timeout=self.timeout,
             data=data,
-            stream=True
+            stream=True,
+            verify=self.verify
         )
         if response.status_code == 507:
             raise NotEnoughSpace()
