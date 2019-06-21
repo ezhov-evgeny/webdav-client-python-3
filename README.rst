@@ -11,6 +11,10 @@ But uses `requests` instead of `PyCURL`
 Release Notes
 =============
 
+**Version 0.12 - 21.06.2019**
+ * Added depth argument in copy method in client.py by https://github.com/JesperHakansson
+ * Added verify attribute to execute_request method by https://github.com/JesperHakansson
+
 **Version 0.11 – 30.03.2019**
  * Fixed MemoryError if a large file is downloaded with a 32 bit python by https://github.com/bboehmke
  * Fixed argcomplete is required to run wdc but was not included in the requirements by https://github.com/evanhorn
