@@ -20,9 +20,9 @@ class ClientTestCase(TestCase):
 
     def setUp(self):
         options = {
-            'webdav_hostname': 'https://webdav.yandex.ru',
-            'webdav_login': 'webdavclient.test2',
-            'webdav_password': 'Qwerty123!'
+            'webdav_hostname': 'http://localhost:8585',
+            'webdav_login': 'alice',
+            'webdav_password': 'secret1234'
         }
         self.client = Client(options)
         if path.exists(path=self.local_path_dir):

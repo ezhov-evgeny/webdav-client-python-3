@@ -1,6 +1,16 @@
 language: python
+
+services:
+  - docker
+
 python:
   - "3.7"
+
+before_install:
+  - docker pull bytemark/webdav
+  - docker run -d --name webdav -e AUTH_TYPE=Basic -e USERNAME=alice -e PASSWORD=secret1234 -p 8585:80 bytemark/webdav
+  - docker ps -a
+
 install:
   - python setup.py develop
 script:
