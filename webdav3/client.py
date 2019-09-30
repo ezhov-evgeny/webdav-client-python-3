@@ -89,6 +89,9 @@ class Client(object):
     # controls whether to verify the server's TLS certificate or not
     verify = True
 
+    # Sets the session for subsequent requests
+    session = requests.Session()
+
     # HTTP headers for different actions
     http_header = {
         'list': ["Accept: */*", "Depth: 1"],
@@ -155,7 +158,7 @@ class Client(object):
                             the specified action.
         :return: HTTP response of request.
         """
-        response = requests.request(
+        response = self.session.request(
             method=Client.requests[action],
             url=self.get_url(path),
             auth=(self.webdav.login, self.webdav.password),
@@ -197,7 +200,7 @@ class Client(object):
     def __init__(self, options):
         """Constructor of WebDAV client
 
-        :param options: the dictionary of connection options to WebDAV can include proxy server options.
+        :param options: the dictionary of connection options to WebDAV.
             WebDev settings:
             `webdav_hostname`: url for WebDAV server should contain protocol and ip address or domain name.
                                Example: `https://webdav.server.com`.
@@ -212,25 +215,19 @@ class Client(object):
             `webdav_send_speed`: (optional) rate limit data upload speed in Bytes per second.
                                  Defaults to unlimited speed.
             `webdav_verbose`: (optional) set verbose mode on.off. By default verbose mode is off.
-            Proxy settings (optional):
-             `proxy_hostname`: url to proxy server should contain protocol and ip address or domain name and if needed
-                               port. Example: `https://proxy.server.com:8383`.
-             `proxy_login`: login name for proxy server.
-             `proxy_password`: password for proxy server.
+
         """
         webdav_options = get_options(option_type=WebDAVSettings, from_options=options)
-        proxy_options = get_options(option_type=ProxySettings, from_options=options)
 
         self.webdav = WebDAVSettings(webdav_options)
-        self.proxy = ProxySettings(proxy_options)
         self.default_options = {}
 
     def valid(self):
-        """Validates of WebDAV and proxy settings.
+        """Validates of WebDAV settings.
 
         :return: True in case settings are valid and False otherwise.
         """
-        return True if self.webdav.valid() and self.proxy.valid() else False
+        return True if self.webdav.valid() else False
 
     @wrap_connection_error
     def list(self, remote_path=root):

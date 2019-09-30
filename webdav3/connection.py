@@ -66,31 +66,3 @@ class WebDAVSettings(ConnectionSettings):
 
         if not self.token and not self.login:
             raise OptionNotValid(name="login", value=self.login, ns=self.ns)
-
-
-class ProxySettings(ConnectionSettings):
-    ns = "proxy:"
-    prefix = "proxy_"
-    keys = {'hostname', 'login', 'password'}
-
-    hostname = None
-    login = None
-    password = None
-
-    def __init__(self, options):
-
-        self.options = dict()
-
-        for key in self.keys:
-            value = options.get(key, '')
-            self.options[key] = value
-            self.__dict__[key] = value
-
-    def is_valid(self):
-
-        if self.password and not self.login:
-            raise OptionNotValid(name="login", value=self.login, ns=self.ns)
-
-        if self.login or self.password:
-            if not self.hostname:
-                raise OptionNotValid(name="hostname", value=self.hostname, ns=self.ns)
