@@ -8,6 +8,23 @@ webdavclient3
 Based on https://github.com/designerror/webdav-client-python
 But uses `requests` instead of `PyCURL`
 
+Sample Usage
+____________
+
+>>> from webdav3.client
+>>> options = {
+... webdav_hostname : <hostname>
+... webdav_login    : <login>
+... webdav_password : <password>
+... }
+>>> client = Client(options)
+>>> client.verify = False # To not check SSL certificates (Default = True)
+>>> client.session.proxies(...) # To set proxy directly into the session (Optional)
+>>> client.session.auth(...) # To set proxy auth directly into the session (Optional)
+>>> client.execute_request("mkdir", <directory_name>)
+
+
+
 Release Notes
 =============
 **Version 0.13 – TBD**
