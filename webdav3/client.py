@@ -159,7 +159,7 @@ class Client(object):
         :return: HTTP response of request.
         """
         if self.session.auth:
-            self.session.request(method="GET", url=self.webdav.hostname) # (Re)Authenticates against the proxy
+            self.session.request(method="GET", url=self.webdav.hostname, verify=self.verify) # (Re)Authenticates against the proxy
         response = self.session.request(
             method=Client.requests[action],
             url=self.get_url(path),
