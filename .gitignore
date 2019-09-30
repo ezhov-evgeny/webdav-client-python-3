@@ -6,5 +6,6 @@
 .project
 .pydevproject
 /.settings/
-.idea/
 venv/
+.idea/
+build
