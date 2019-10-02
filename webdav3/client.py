@@ -172,6 +172,10 @@ class Client(object):
         )
         if response.status_code == 507:
             raise NotEnoughSpace()
+        if response.status_code == 404:
+            raise RemoteResourceNotFound(path=path)
+        if response.status_code == 405:
+            raise MethodNotSupported(name=action, server=hostname)
         if response.status_code >= 400:
             raise ResponseErrorCode(url=self.get_url(path), code=response.status_code, message=response.content)
         return response
@@ -269,6 +273,9 @@ class Client(object):
         :param remote_path: (optional) path to resource on WebDAV server. Defaults is root directory of WebDAV.
         :return: True if resource is exist or False otherwise
         """
+
+        if not self.webdav.do_check:
+            return True
         urn = Urn(remote_path)
         try:
             response = self.execute_request(action='check', path=urn.quote())

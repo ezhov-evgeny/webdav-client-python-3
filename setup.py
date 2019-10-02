@@ -42,6 +42,11 @@ class Test(TestCommand):
         errno = pytest.main(self.pytest_args)
         sys.exit(errno)
 
+try:
+    long_description = open('README.rst', encoding="utf-8").read()
+except TypeError:
+    long_description = open('README.rst').read()
+
 setup(
     name='webdavclient3',
     version=version,
@@ -54,7 +59,7 @@ setup(
     cmdclass={'install': Install, 'test': Test},
     description='WebDAV client, based on original package https://github.com/designerror/webdav-client-python but '
                 'uses requests instead of PyCURL',
-    long_description=open('README.rst').read(),
+    long_description=long_description,
     author='Evgeny Ezhov',
     author_email='ezhov.evgeny@gmail.com',
     url='https://github.com/ezhov-evgeny/webdav-client-python-3',
