@@ -55,7 +55,7 @@ class MethodNotSupported(WebDavException):
         self.server = server
 
     def __str__(self):
-        return "Method {name} not supported for {server}".format(name=self.name, server=self.server)
+        return "Method '{name}' not supported for {server}".format(name=self.name, server=self.server)
 
 
 class ConnectionException(WebDavException):
