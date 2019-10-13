@@ -29,6 +29,7 @@ Release Notes
 =============
 **Version 0.13 – TBD**
  * Main version of Python is updated up to 3.7
+ * Switch to use python sessions rather than requests by https://github.com/delrey1
 
 **Version 0.12 - 21.06.2019**
  * Added depth argument in copy method in client.py by https://github.com/JesperHakansson
