@@ -24,7 +24,7 @@ class ClientTestCase(TestCase):
     def test_create_free_space_request_content(self):
         result = utils.create_free_space_request_content()
         self.assertEqual(result, b'<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n<propfind xmlns="DAV:"><prop>'
-                                  b'<quota-available-bytes/><quota-used-bytes/></prop></propfind>')
+                                 b'<quota-available-bytes/><quota-used-bytes/></prop></propfind>')
 
     def test_parse_free_space_response(self):
         content = '<?xml version="1.0" encoding="utf-8"?><d:multistatus xmlns:d="DAV:"><d:response><d:href>/</d:href>' \
@@ -55,7 +55,7 @@ class ClientTestCase(TestCase):
         }
         result = utils.create_get_property_request_content(option=option, )
         self.assertEqual(result, b'<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n<propfind xmlns="DAV:"><prop>'
-                                  b'<aProperty xmlns="test"/></prop></propfind>')
+                                 b'<aProperty xmlns="test"/></prop></propfind>')
 
     def test_create_get_property_request_content_name_only(self):
         option = {
@@ -63,7 +63,7 @@ class ClientTestCase(TestCase):
         }
         result = utils.create_get_property_request_content(option=option)
         self.assertEqual(result, b'<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n<propfind xmlns="DAV:"><prop>'
-                                  b'<aProperty xmlns=""/></prop></propfind>')
+                                 b'<aProperty xmlns=""/></prop></propfind>')
 
     def test_parse_get_property_response(self):
         content = '<?xml version="1.0" encoding="utf-8"?><d:multistatus xmlns:d="DAV:"><d:response>' \
@@ -81,7 +81,7 @@ class ClientTestCase(TestCase):
         }
         result = utils.create_set_property_batch_request_content(options=[option])
         self.assertEqual(result, b'<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n<propertyupdate xmlns="DAV:"><set><prop>'
-                                  b'<aProperty xmlns="test">aValue</aProperty></prop></set></propertyupdate>')
+                                 b'<aProperty xmlns="test">aValue</aProperty></prop></set></propertyupdate>')
 
     def test_create_set_one_property_request_content_name_only(self):
         option = {
@@ -89,7 +89,7 @@ class ClientTestCase(TestCase):
         }
         result = utils.create_set_property_batch_request_content(options=[option])
         self.assertEqual(result, b'<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n<propertyupdate xmlns="DAV:"><set><prop>'
-                                  b'<aProperty xmlns=""></aProperty></prop></set></propertyupdate>')
+                                 b'<aProperty xmlns=""></aProperty></prop></set></propertyupdate>')
 
     def test_create_set_property_batch_request_content(self):
         options = [
@@ -106,8 +106,8 @@ class ClientTestCase(TestCase):
         ]
         result = utils.create_set_property_batch_request_content(options=options)
         self.assertEqual(result, b'<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n<propertyupdate xmlns="DAV:"><set><prop>'
-                                  b'<aProperty xmlns="test">aValue</aProperty><aProperty2 xmlns="test2">aValue2'
-                                  b'</aProperty2></prop></set></propertyupdate>')
+                                 b'<aProperty xmlns="test">aValue</aProperty><aProperty2 xmlns="test2">aValue2'
+                                 b'</aProperty2></prop></set></propertyupdate>')
 
     def test_create_set_property_batch_request_content_name_only(self):
         options = [
@@ -120,8 +120,8 @@ class ClientTestCase(TestCase):
         ]
         result = utils.create_set_property_batch_request_content(options=options)
         self.assertEqual(result, b'<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n<propertyupdate xmlns="DAV:"><set><prop>'
-                                  b'<aProperty xmlns=""></aProperty><aProperty2 xmlns=""></aProperty2></prop></set>'
-                                  b'</propertyupdate>')
+                                 b'<aProperty xmlns=""></aProperty><aProperty2 xmlns=""></aProperty2></prop></set>'
+                                 b'</propertyupdate>')
 
     def test_etree_to_string(self):
         tree = ElementTree(Element('test'))
@@ -129,56 +129,14 @@ class ClientTestCase(TestCase):
         self.assertEqual(result, b'<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n<test/>')
 
     def test_parse_is_dir_response_directory(self):
-        content = '<?xml version=\'1.0\' encoding=\'UTF-8\'?><d:multistatus xmlns:d="DAV:"><d:response><d:href>/</d:h' \
-                  'ref><d:propstat><d:status>HTTP/1.1 200 OK</d:status><d:prop><d:creationdate>2012-04-04T20:00:00Z</' \
-                  'd:creationdate><d:displayname>disk</d:displayname><d:getlastmodified>Wed, 04 Apr 2012 20:00:00 GMT' \
-                  '</d:getlastmodified><d:resourcetype><d:collection/></d:resourcetype></d:prop></d:propstat></d:resp' \
-                  'onse><d:response><d:href>/test_dir/</d:href><d:propstat><d:status>HTTP/1.1 200 OK</d:status><d:pro' \
-                  'p><d:creationdate>2018-05-10T07:31:13Z</d:creationdate><d:displayname>test_dir</d:displayname><d:g' \
-                  'etlastmodified>Thu, 10 May 2018 07:31:13 GMT</d:getlastmodified><d:resourcetype><d:collection/></d' \
-                  ':resourcetype></d:prop></d:propstat></d:response><d:response><d:href>/%D0%93%D0%BE%D1%80%D1%8B.jpg' \
-                  '</d:href><d:propstat><d:status>HTTP/1.1 200 OK</d:status><d:prop><d:getetag>1392851f0668017168ee4b' \
-                  '5a59d66e7b</d:getetag><d:creationdate>2018-05-09T14:44:28Z</d:creationdate><d:displayname>Горы.jpg' \
-                  '</d:displayname><d:getlastmodified>Wed, 09 May 2018 14:44:28 GMT</d:getlastmodified><d:getcontentt' \
-                  'ype>image/jpeg</d:getcontenttype><d:getcontentlength>1762478</d:getcontentlength><d:resourcetype/>' \
-                  '</d:prop></d:propstat></d:response><d:response><d:href>/%D0%97%D0%B8%D0%BC%D0%B0.jpg</d:href><d:pr' \
-                  'opstat><d:status>HTTP/1.1 200 OK</d:status><d:prop><d:getetag>a64146fee5e15b3b94c204e544426d43</d:' \
-                  'getetag><d:creationdate>2018-05-09T14:44:28Z</d:creationdate><d:displayname>Зима.jpg</d:displaynam' \
-                  'e><d:getlastmodified>Wed, 09 May 2018 14:44:28 GMT</d:getlastmodified><d:getcontenttype>image/jpeg' \
-                  '</d:getcontenttype><d:getcontentlength>1394575</d:getcontentlength><d:resourcetype/></d:prop></d:p' \
-                  'ropstat></d:response><d:response><d:href>/%D0%9C%D0%B8%D1%88%D0%BA%D0%B8.jpg</d:href><d:propstat><' \
-                  'd:status>HTTP/1.1 200 OK</d:status><d:prop><d:getetag>569a1c98696050439b5b2a1ecfa52d19</d:getetag>' \
-                  '<d:creationdate>2018-05-09T14:44:27Z</d:creationdate><d:displayname>Мишки.jpg</d:displayname><d:ge' \
-                  'tlastmodified>Wed, 09 May 2018 14:44:27 GMT</d:getlastmodified><d:getcontenttype>image/jpeg</d:get' \
-                  'contenttype><d:getcontentlength>1555830</d:getcontentlength><d:resourcetype/></d:prop></d:propstat' \
-                  '></d:response><d:response><d:href>/%D0%9C%D0%BE%D1%80%D0%B5.jpg</d:href><d:propstat><d:status>HTTP' \
-                  '/1.1 200 OK</d:status><d:prop><d:getetag>ab903d9cab031eca2a8f12f37bbc9d37</d:getetag><d:creationda' \
-                  'te>2018-05-09T14:44:27Z</d:creationdate><d:displayname>Море.jpg</d:displayname><d:getlastmodified>' \
-                  'Wed, 09 May 2018 14:44:27 GMT</d:getlastmodified><d:getcontenttype>image/jpeg</d:getcontenttype><d' \
-                  ':getcontentlength>1080301</d:getcontentlength><d:resourcetype/></d:prop></d:propstat></d:response>' \
-                  '<d:response><d:href>/%D0%9C%D0%BE%D1%81%D0%BA%D0%B2%D0%B0.jpg</d:href><d:propstat><d:status>HTTP/1' \
-                  '.1 200 OK</d:status><d:prop><d:getetag>d27d72a3059ad5ebed7a5470459d2670</d:getetag><d:creationdate' \
-                  '>2018-05-09T14:44:27Z</d:creationdate><d:displayname>Москва.jpg</d:displayname><d:getlastmodified>' \
-                  'Wed, 09 May 2018 14:44:27 GMT</d:getlastmodified><d:getcontenttype>image/jpeg</d:getcontenttype><d' \
-                  ':getcontentlength>1454228</d:getcontentlength><d:resourcetype/></d:prop></d:propstat></d:response>' \
-                  '<d:response><d:href>/%D0%A1%D0%B0%D0%BD%D0%BA%D1%82-%D0%9F%D0%B5%D1%82%D0%B5%D1%80%D0%B1%D1%83%D1%' \
-                  '80%D0%B3.jpg</d:href><d:propstat><d:status>HTTP/1.1 200 OK</d:status><d:prop><d:getetag>f1abe3b27b' \
-                  '410128623fd1ca00a45c29</d:getetag><d:creationdate>2018-05-09T14:44:27Z</d:creationdate><d:displayn' \
-                  'ame>Санкт-Петербург.jpg</d:displayname><d:getlastmodified>Wed, 09 May 2018 14:44:27 GMT</d:getlast' \
-                  'modified><d:getcontenttype>image/jpeg</d:getcontenttype><d:getcontentlength>2573704</d:getcontentl' \
-                  'ength><d:resourcetype/></d:prop></d:propstat></d:response><d:response><d:href>/%D0%A5%D0%BB%D0%B5%' \
-                  'D0%B1%D0%BD%D1%8B%D0%B5%20%D0%BA%D1%80%D0%BE%D1%88%D0%BA%D0%B8.mp4</d:href><d:propstat><d:status>H' \
-                  'TTP/1.1 200 OK</d:status><d:prop><d:getetag>ea977f513074d5524bee3638798183b9</d:getetag><d:creatio' \
-                  'ndate>2018-05-09T14:44:28Z</d:creationdate><d:displayname>Хлебные крошки.mp4</d:displayname><d:get' \
-                  'lastmodified>Wed, 09 May 2018 14:44:28 GMT</d:getlastmodified><d:getcontenttype>video/mp4</d:getco' \
-                  'ntenttype><d:getcontentlength>31000079</d:getcontentlength><d:resourcetype/></d:prop></d:propstat>' \
-                  '</d:response></d:multistatus>'
+        f = open('./tests/response_dir.xml')
+        content = f.read()
         path = '/test_dir'
         hostname = 'https://webdav.yandex.ru'
-        result = utils.parse_is_dir_response(content.encode('utf-8'), path, hostname)
+        result = utils.parse_is_dir_response(content, path, hostname)
         self.assertTrue(result, 'It should be directory')
 
-    def test_parse_is_dir_response_directory(self):
+    def test_parse_is_dir_response_file(self):
         content = '<?xml version=\'1.0\' encoding=\'UTF-8\'?><d:multistatus xmlns:d="DAV:"><d:response><d:href>/test_' \
                   'dir/</d:href><d:propstat><d:status>HTTP/1.1 200 OK</d:status><d:prop><d:creationdate>2018-05-10T07' \
                   ':40:11Z</d:creationdate><d:displayname>test_dir</d:displayname><d:getlastmodified>Thu, 10 May 2018' \
