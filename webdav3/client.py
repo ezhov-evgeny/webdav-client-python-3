@@ -960,6 +960,8 @@ class WebDavXmlUtils:
         :return: XML object of response for the remote resource defined by path.
         """
         try:
+            if isinstance(content, str):
+                content = content.encode('utf-8')
             tree = etree.fromstring(content)
             responses = tree.findall("{DAV:}response")
 
