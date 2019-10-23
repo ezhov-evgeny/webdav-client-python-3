@@ -963,6 +963,8 @@ class WebDavXmlUtils:
         print("content", content)
         print("path", path)
         print("hostname", hostname)
+        from urllib.parse import urlparse
+        prefix = urlparse(hostname).path
         try:
             tree = etree.fromstring(content)
             print("tree", tree)
@@ -976,6 +978,9 @@ class WebDavXmlUtils:
                 print("href", href)
 
                 if Urn.compare_path(n_path, href) is True:
+                    return resp
+                href_without_prefix = href[len(prefix):] if href.startswith(prefix) else href
+                if Urn.compare_path(n_path, href_without_prefix) is True:
                     return resp
             raise RemoteResourceNotFound(path)
         except etree.XMLSyntaxError:
