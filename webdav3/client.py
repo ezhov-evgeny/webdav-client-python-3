@@ -959,14 +959,21 @@ class WebDavXmlUtils:
         :param hostname: the server hostname.
         :return: XML object of response for the remote resource defined by path.
         """
+        print("extract_response_for_path called")
+        print("content", content)
+        print("path", path)
+        print("hostname", hostname)
         try:
             tree = etree.fromstring(content)
+            print("tree", tree)
             responses = tree.findall("{DAV:}response")
-
+            print("responses", responses)
             n_path = Urn.normalize_path(path)
-
+            print("n_path", n_path)
             for resp in responses:
                 href = resp.findtext("{DAV:}href")
+                print("resp", resp)
+                print("href", href)
 
                 if Urn.compare_path(n_path, href) is True:
                     return resp
