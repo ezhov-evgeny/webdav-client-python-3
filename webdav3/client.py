@@ -16,10 +16,10 @@ from webdav3.exceptions import *
 from webdav3.urn import Urn
 
 try:
-    from urllib.parse import unquote, urlsplit
+    from urllib.parse import unquote, urlsplit, urlparse
 except ImportError:
     from urllib import unquote
-    from urlparse import urlsplit
+    from urlparse import urlsplit, urlparse
 
 __version__ = "0.2"
 log = logging.getLogger(__name__)
@@ -959,23 +959,14 @@ class WebDavXmlUtils:
         :param hostname: the server hostname.
         :return: XML object of response for the remote resource defined by path.
         """
-        print("extract_response_for_path called")
-        print("content", content)
-        print("path", path)
-        print("hostname", hostname)
-        from urllib.parse import urlparse
         prefix = urlparse(hostname).path
         try:
             tree = etree.fromstring(content)
-            print("tree", tree)
             responses = tree.findall("{DAV:}response")
-            print("responses", responses)
             n_path = Urn.normalize_path(path)
-            print("n_path", n_path)
+
             for resp in responses:
                 href = resp.findtext("{DAV:}href")
-                print("resp", resp)
-                print("href", href)
 
                 if Urn.compare_path(n_path, href) is True:
                     return resp
