@@ -1,7 +1,7 @@
 webdavclient3  
 =============
 
-.. image:: https://travis-ci.com/ezhov-evgeny/webdav-client-python-3.svg?branch=master
+.. image:: https://travis-ci.com/ezhov-evgeny/webdav-client-python-3.svg?branch=develop
     :target: https://travis-ci.com/ezhov-evgeny/webdav-client-python-3
 
 
@@ -33,6 +33,7 @@ Release Notes
  * Stripping suburl from paths in extract_response_for_path by https://github.com/Skeen
  * Added Docker Web DAV for CI
  * Changed HEAD to GET method for 'check' request due of not all servers support HEAD by request of https://github.com/danieleTrimarchi
+ * Removed a costy is_dir-check on obvious directories to speed up a pull by https://github.com/jolly-jump
 
 **Version 0.12 - 21.06.2019**
  * Added depth argument in copy method in client.py by https://github.com/JesperHakansson
