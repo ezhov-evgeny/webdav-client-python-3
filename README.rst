@@ -34,6 +34,7 @@ Release Notes
  * Added Docker Web DAV for CI
  * Changed HEAD to GET method for 'check' request due of not all servers support HEAD by request of https://github.com/danieleTrimarchi
  * Removed a costy is_dir-check on obvious directories to speed up a pull by https://github.com/jolly-jump
+ * Added an option to disable check in case WebDAV server is not support it by request of https://github.com/dzhuang
 
 **Version 0.12 - 21.06.2019**
  * Added depth argument in copy method in client.py by https://github.com/JesperHakansson

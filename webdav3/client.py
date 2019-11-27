@@ -274,11 +274,13 @@ class Client(object):
         :return: True if resource is exist or False otherwise
         """
 
-        if not self.webdav.do_check:
+        if self.webdav.disable_check:
             return True
         urn = Urn(remote_path)
         try:
             response = self.execute_request(action='check', path=urn.quote())
+        except RemoteResourceNotFound:
+            return False
         except ResponseErrorCode:
             return False
 
