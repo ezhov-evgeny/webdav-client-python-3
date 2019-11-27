@@ -689,11 +689,10 @@ class Client(object):
         def prune(src, exp):
             return [sub(exp, "", item) for item in src]
 
-        updated=False
+        updated = False
 
         urn = Urn(remote_directory, directory=True)
 
-        ## here we check for the current directory
         if not self.is_dir(urn.path()):
             raise OptionNotValid(name="remote_path", value=remote_directory)
 
@@ -702,7 +701,6 @@ class Client(object):
 
         local_resource_names = listdir(local_directory)
 
-        ## here we get all files and directories in the current directory
         paths = self.list(urn.path())
         expression = "{begin}{end}".format(begin="^", end=remote_directory)
         remote_resource_names = prune(paths, expression)
@@ -715,19 +713,16 @@ class Client(object):
 
             remote_urn = Urn(remote_path)
 
-            ## if the string ends with an "/" it *must* be a directory
-            ## no need to check it here
             if remote_urn.path().endswith("/"):
                 if not os.path.exists(local_path):
-                    updated=True
+                    updated = True
                     os.mkdir(local_path)
-                ## nevertheless, since we pull the directory, it will be checked up there
                 self.pull(remote_directory=remote_path, local_directory=local_path)
             else:
                 if remote_resource_name in local_resource_names:
                     continue
                 self.download_file(remote_path=remote_path, local_path=local_path)
-                updated=True
+                updated = True
         return updated
 
     def sync(self, remote_directory, local_directory):
