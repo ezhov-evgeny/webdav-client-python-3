@@ -12,8 +12,10 @@ from webdav3.exceptions import MethodNotSupported
 class ClientTestCase(TestCase):
     remote_path_file = 'test_dir/test.txt'
     remote_path_file2 = 'test_dir2/test.txt'
+    remote_inner_path_file = 'test_dir/inner/test.txt'
     remote_path_dir = 'test_dir'
     remote_path_dir2 = 'test_dir2'
+    remote_inner_path_dir = 'test_dir/inner'
     local_base_dir = 'tests/'
     local_file = 'test.txt'
     local_file_path = local_base_dir + 'test.txt'
@@ -207,13 +209,37 @@ class ClientTestCase(TestCase):
                                           option={'namespace': 'test', 'name': 'aProperty2'})
         self.assertEqual(result, 'aValue2', 'Second property value should be set')
 
-    def _prepare_for_downloading(self):
+    def test_pull(self):
+        self._prepare_for_downloading(True)
+        self.client.pull(self.remote_path_dir, self.local_path_dir)
+        self.assertTrue(path.exists(self.local_path_dir), 'Expected the directory is downloaded.')
+        self.assertTrue(path.exists(self.local_path_dir + os.path.sep + 'inner'), 'Expected the directory is downloaded.')
+        self.assertTrue(path.exists(self.local_path_dir + os.path.sep + 'inner'), 'Expected the directory is downloaded.')
+        self.assertTrue(path.isdir(self.local_path_dir), 'Expected this is a directory.')
+        self.assertTrue(path.isdir(self.local_path_dir + os.path.sep + 'inner'), 'Expected this is a directory.')
+        self.assertTrue(path.exists(self.local_path_dir + os.path.sep + self.local_file),
+                        'Expected the file is downloaded')
+        self.assertTrue(path.isfile(self.local_path_dir + os.path.sep + self.local_file),
+                        'Expected this is a file')
+
+    def test_push(self):
+        self._prepare_for_uploading()
+        self.client.push(self.remote_path_dir, self.local_path_dir)
+        self.assertTrue(self.client.check(self.remote_path_dir), 'Expected the directory is created.')
+        self.assertTrue(self.client.check(self.remote_path_file), 'Expected the file is uploaded.')
+
+    def _prepare_for_downloading(self, inner_dir=False):
         if not self.client.check(remote_path=self.remote_path_dir):
             self.client.mkdir(remote_path=self.remote_path_dir)
         if not self.client.check(remote_path=self.remote_path_file):
             self.client.upload_file(remote_path=self.remote_path_file, local_path=self.local_file_path)
         if not path.exists(self.local_path_dir):
             os.makedirs(self.local_path_dir)
+        if inner_dir:
+            if not self.client.check(remote_path=self.remote_inner_path_dir):
+                self.client.mkdir(remote_path=self.remote_inner_path_dir)
+            if not self.client.check(remote_path=self.remote_inner_path_file):
+                self.client.upload_file(remote_path=self.remote_inner_path_file, local_path=self.local_file_path)
 
     def _prepare_for_uploading(self):
         if not self.client.check(remote_path=self.remote_path_dir):
