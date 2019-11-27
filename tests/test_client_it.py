@@ -6,6 +6,7 @@ from os import path
 from unittest import TestCase
 
 from webdav3.client import Client
+from webdav3.exceptions import MethodNotSupported
 
 
 class ClientTestCase(TestCase):
@@ -43,7 +44,8 @@ class ClientTestCase(TestCase):
         self.assertGreater(file_list.__len__(), 0, 'Expected that amount of files more then 0')
 
     def test_free(self):
-        self.assertGreater(self.client.free(), 0, 'Expected that free space on WebDAV server is more then 0 bytes')
+        with self.assertRaises(MethodNotSupported):
+            self.assertGreater(self.client.free(), 0, 'Expected that free space on WebDAV server is more then 0 bytes')
 
     def test_check(self):
         self.assertTrue(self.client.check(), 'Expected that root directory is exist')
@@ -54,16 +56,12 @@ class ClientTestCase(TestCase):
         self.client.mkdir(remote_path=self.remote_path_dir)
         self.assertTrue(self.client.check(remote_path=self.remote_path_dir), 'Expected the directory is created.')
 
-    @unittest.skip("Yandex brakes response for file it contains property resourcetype as collection but it should "
-                   "be empty for file")
     def test_download_to(self):
         self._prepare_for_downloading()
         buff = BytesIO()
         self.client.download_from(buff=buff, remote_path=self.remote_path_file)
-        self.assertEqual(buff.getvalue(), 'test content for testing of webdav client')
+        self.assertEqual(buff.getvalue(), b'test content for testing of webdav client')
 
-    @unittest.skip("Yandex brakes response for file it contains property resourcetype as collection but it should "
-                   "be empty for file")
     def test_download(self):
         self._prepare_for_downloading()
         self.client.download(local_path=self.local_path_dir, remote_path=self.remote_path_dir)
@@ -71,14 +69,11 @@ class ClientTestCase(TestCase):
         self.assertTrue(path.isdir(self.local_path_dir), 'Expected this is a directory.')
         self.assertTrue(path.exists(self.local_path_dir + os.path.sep + self.local_file),
                         'Expected the file is downloaded')
-        self.assertTrue(path.isfile(self.local_path_dir + os.path.sep + self.local_path_file),
+        self.assertTrue(path.isfile(self.local_path_dir + os.path.sep + self.local_file),
                         'Expected this is a file')
 
-    @unittest.skip("Yandex brakes response for file it contains property resourcetype as collection but it should "
-                   "be empty for file")
     def test_download_sync(self):
         self._prepare_for_downloading()
-        os.mkdir(self.local_path_dir)
 
         def callback():
             self.assertTrue(path.exists(self.local_path_dir + os.path.sep + self.local_file),
@@ -91,11 +86,8 @@ class ClientTestCase(TestCase):
         self.assertTrue(path.exists(self.local_path_dir + os.path.sep + self.local_file),
                         'Expected the file has already been downloaded')
 
-    @unittest.skip("Yandex brakes response for file it contains property resourcetype as collection but it should "
-                   "be empty for file")
     def test_download_async(self):
         self._prepare_for_downloading()
-        os.mkdir(self.local_path_dir)
 
         def callback():
             self.assertTrue(path.exists(self.local_path_dir + os.path.sep + self.local_file),
@@ -166,7 +158,6 @@ class ClientTestCase(TestCase):
     def test_info(self):
         self._prepare_for_downloading()
         result = self.client.info(remote_path=self.remote_path_file)
-        self.assertEqual(result['name'], 'test.txt')
         self.assertEqual(result['size'], '41')
         self.assertTrue('created' in result)
         self.assertTrue('modified' in result)
