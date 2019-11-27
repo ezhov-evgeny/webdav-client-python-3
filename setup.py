@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 from setuptools.command.install import install as InstallCommand
 from setuptools.command.test import test as TestCommand
 
-version = "0.12"
+version = "0.13"
 requirements = "libxml2-dev libxslt-dev python-dev"
 
 
@@ -43,9 +43,9 @@ class Test(TestCommand):
         sys.exit(errno)
 
 try:
-    long_description = open('README.rst', encoding="utf-8").read()
+    long_description = open('README.md', encoding="utf-8").read()
 except TypeError:
-    long_description = open('README.rst').read()
+    long_description = open('README.md').read()
 
 setup(
     name='webdavclient3',
@@ -60,6 +60,7 @@ setup(
     description='WebDAV client, based on original package https://github.com/designerror/webdav-client-python but '
                 'uses requests instead of PyCURL',
     long_description=long_description,
+    long_description_content_type='text/markdown',
     author='Evgeny Ezhov',
     author_email='ezhov.evgeny@gmail.com',
     url='https://github.com/ezhov-evgeny/webdav-client-python-3',
@@ -72,15 +73,7 @@ setup(
         'Operating System :: MacOS',
         'Operating System :: Microsoft',
         'Operating System :: Unix',
-        'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3.0',
-        'Programming Language :: Python :: 3.1',
-        'Programming Language :: Python :: 3.2',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Topic :: Internet',
         'Topic :: Software Development :: Libraries :: Python Modules',

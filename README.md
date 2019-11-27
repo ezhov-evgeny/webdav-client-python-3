@@ -1,16 +1,13 @@
-webdavclient3  
-=============
-
-.. image:: https://travis-ci.com/ezhov-evgeny/webdav-client-python-3.svg?branch=develop
-    :target: https://travis-ci.com/ezhov-evgeny/webdav-client-python-3
-
+webdavclient3 [![Build Status](https://travis-ci.com/ezhov-evgeny/webdav-client-python-3.svg?branch=develop)](https://travis-ci.com/ezhov-evgeny/webdav-client-python-3) [![PyPI](https://img.shields.io/pypi/v/webdavclient3)](https://pypi.org/project/webdavclient3/) ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/webdavclient3)
+=========
 
 Based on https://github.com/designerror/webdav-client-python
 But uses `requests` instead of `PyCURL`
 
 Sample Usage
-____________
-
+------------
+`pip install webdavclient3`
+```
 >>> from webdav3.client
 >>> options = {
 ... webdav_hostname : <hostname>
@@ -22,12 +19,11 @@ ____________
 >>> client.session.proxies(...) # To set proxy directly into the session (Optional)
 >>> client.session.auth(...) # To set proxy auth directly into the session (Optional)
 >>> client.execute_request("mkdir", <directory_name>)
-
-
+```
 
 Release Notes
-=============
-**Version 0.13 – TBD**
+-------------
+**Version 0.13 – 27.11.2019**
  * Main version of Python is updated up to 3.7
  * Switch to use python sessions rather than requests by https://github.com/delrey1
  * Stripping suburl from paths in extract_response_for_path by https://github.com/Skeen
