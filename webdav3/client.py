@@ -21,7 +21,6 @@ except ImportError:
     from urllib import unquote
     from urlparse import urlsplit, urlparse
 
-__version__ = "0.2"
 log = logging.getLogger(__name__)
 
 
@@ -74,6 +73,7 @@ def wrap_connection_error(fn):
             raise ConnectionException(re)
         else:
             return res
+
     return _wrapper
 
 
@@ -128,7 +128,7 @@ class Client(object):
         if self.webdav.token:
             webdav_token = "Authorization: OAuth {token}".format(token=self.webdav.token)
             headers.append(webdav_token)
-        return dict([map(lambda s: s.strip(), i.split(':')) for i in headers])
+        return dict([map(lambda s: s.strip(), i.split(':', 1)) for i in headers])
 
     def get_url(self, path):
         """Generates url by uri path.
@@ -159,7 +159,7 @@ class Client(object):
         :return: HTTP response of request.
         """
         if self.session.auth:
-            self.session.request(method="GET", url=self.webdav.hostname, verify=self.verify) # (Re)Authenticates against the proxy
+            self.session.request(method="GET", url=self.webdav.hostname, verify=self.verify)  # (Re)Authenticates against the proxy
         response = self.session.request(
             method=Client.requests[action],
             url=self.get_url(path),
@@ -476,7 +476,7 @@ class Client(object):
             raise RemoteParentNotFound(urn.path())
 
         with open(local_path, "rb") as local_file:
-          self.execute_request(action='upload', path=urn.quote(), data=local_file)
+            self.execute_request(action='upload', path=urn.quote(), data=local_file)
 
     def upload_sync(self, remote_path, local_path, callback=None):
         """Uploads resource to remote path on WebDAV server synchronously.
@@ -519,9 +519,12 @@ class Client(object):
         if not self.check(urn_to.parent()):
             raise RemoteParentNotFound(urn_to.path())
 
-        header_destination = "Destination: {path}".format(path=self.get_full_path(urn_to))
-        header_depth = "Depth: {depth}".format(depth=depth)
-        self.execute_request(action='copy', path=urn_from.quote(), headers_ext=[header_destination, header_depth])
+        headers = [
+            "Destination: {url}".format(url=self.get_url(urn_to))
+        ]
+        if self.is_dir(urn_from.path()):
+            headers.append("Depth: {depth}".format(depth=depth))
+        self.execute_request(action='copy', path=urn_from.quote(), headers_ext=headers)
 
     @wrap_connection_error
     def move(self, remote_path_from, remote_path_to, overwrite=False):
@@ -540,7 +543,7 @@ class Client(object):
         if not self.check(urn_to.parent()):
             raise RemoteParentNotFound(urn_to.path())
 
-        header_destination = "Destination: {path}".format(path=self.get_full_path(urn_to))
+        header_destination = "Destination: {path}".format(path=self.get_url(urn_to))
         header_overwrite = "Overwrite: {flag}".format(flag="T" if overwrite else "F")
         self.execute_request(action='move', path=urn_from.quote(), headers_ext=[header_destination, header_overwrite])
 
