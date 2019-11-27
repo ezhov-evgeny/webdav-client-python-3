@@ -21,6 +21,8 @@ before_install:
 
 install:
   - python setup.py develop
+  - pip install coverage
 script:
-  - python setup.py test
-  - sonar-scanner -X
+  - coverage run setup.py test
+  - coverage xml
+  - sonar-scanner
