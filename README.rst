@@ -32,6 +32,7 @@ Release Notes
  * Switch to use python sessions rather than requests by https://github.com/delrey1
  * Stripping suburl from paths in extract_response_for_path by https://github.com/Skeen
  * Added Docker Web DAV for CI
+ * Changed HEAD to GET method for 'check' request due of not all servers support HEAD by request of https://github.com/danieleTrimarchi
 
 **Version 0.12 - 21.06.2019**
  * Added depth argument in copy method in client.py by https://github.com/JesperHakansson

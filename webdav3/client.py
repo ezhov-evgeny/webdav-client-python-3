@@ -184,7 +184,7 @@ class Client(object):
         'move': "MOVE",
         'mkdir': "MKCOL",
         'clean': "DELETE",
-        'check': "HEAD",
+        'check': "GET",
         'list': "PROPFIND",
         'free': "PROPFIND",
         'info': "PROPFIND",
