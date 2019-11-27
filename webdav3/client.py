@@ -2,14 +2,13 @@
 
 import functools
 import logging
+import lxml.etree as etree
 import os
+import requests
 import shutil
 import threading
 from io import BytesIO
 from re import sub
-
-import lxml.etree as etree
-import requests
 
 from webdav3.connection import *
 from webdav3.exceptions import *
@@ -977,8 +976,6 @@ class WebDavXmlUtils:
         """
         prefix = urlparse(hostname).path
         try:
-            if isinstance(content, str):
-                content = content.encode('utf-8')
             tree = etree.fromstring(content)
             responses = tree.findall("{DAV:}response")
             n_path = Urn.normalize_path(path)

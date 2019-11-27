@@ -129,8 +129,12 @@ class ClientTestCase(TestCase):
         self.assertEqual(result, b'<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n<test/>')
 
     def test_parse_is_dir_response_directory(self):
-        f = open('./tests/response_dir.xml', encoding='utf-8')
-        content = f.read()
+        try:
+            f = open('./tests/response_dir.xml', encoding='utf-8')
+            content = f.read().encode('utf-8')
+        except:
+            f = open('./tests/response_dir.xml')
+            content = f.read().decode('utf-8').encode('utf-8')
         path = '/test_dir'
         hostname = 'https://webdav.yandex.ru'
         result = utils.parse_is_dir_response(content, path, hostname)
