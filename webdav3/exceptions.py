@@ -96,7 +96,7 @@ class ResponseErrorCode(WebDavException):
 
 class NotEnoughSpace(WebDavException):
     def __init__(self):
-        pass
+        self.message = "Not enough space on the server"
 
     def __str__(self):
-        return "Not enough space on the server"
+        return self.message

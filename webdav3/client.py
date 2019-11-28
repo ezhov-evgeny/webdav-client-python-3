@@ -2,13 +2,14 @@
 
 import functools
 import logging
-import lxml.etree as etree
 import os
-import requests
 import shutil
 import threading
 from io import BytesIO
 from re import sub
+
+import lxml.etree as etree
+import requests
 
 from webdav3.connection import *
 from webdav3.exceptions import *
@@ -174,7 +175,7 @@ class Client(object):
         if response.status_code == 404:
             raise RemoteResourceNotFound(path=path)
         if response.status_code == 405:
-            raise MethodNotSupported(name=action, server=hostname)
+            raise MethodNotSupported(name=action, server=self.webdav.hostname)
         if response.status_code >= 400:
             raise ResponseErrorCode(url=self.get_url(path), code=response.status_code, message=response.content)
         return response
@@ -243,9 +244,8 @@ class Client(object):
         :return: list of nested file or directory names.
         """
         directory_urn = Urn(remote_path, directory=True)
-        if directory_urn.path() != Client.root:
-            if not self.check(directory_urn.path()):
-                raise RemoteResourceNotFound(directory_urn.path())
+        if directory_urn.path() != Client.root and not self.check(directory_urn.path()):
+            raise RemoteResourceNotFound(directory_urn.path())
 
         response = self.execute_request(action='list', path=directory_urn.quote())
         urns = WebDavXmlUtils.parse_get_list_response(response.content)
@@ -817,9 +817,6 @@ class Resource(object):
 
 
 class WebDavXmlUtils:
-    def __init__(self):
-        pass
-
     @staticmethod
     def parse_get_list_response(content):
         """Parses of response content XML from WebDAV server and extract file and directory names.

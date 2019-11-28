@@ -6,10 +6,13 @@ from webdav3.urn import Urn
 
 class ConnectionSettings:
     def is_valid(self):
+        """
+        Method checks is settings are valid
+        :return: True if settings are valid otherwise False
+        """
         pass
 
     def valid(self):
-
         try:
             self.is_valid()
         except OptionNotValid:
@@ -37,7 +40,6 @@ class WebDAVSettings(ConnectionSettings):
     disable_check = False
 
     def __init__(self, options):
-
         self.options = dict()
 
         for key in self.keys:
@@ -49,7 +51,6 @@ class WebDAVSettings(ConnectionSettings):
         self.root = self.root.rstrip(Urn.separate)
 
     def is_valid(self):
-
         if not self.hostname:
             raise OptionNotValid(name="hostname", value=self.hostname, ns=self.ns)
 
