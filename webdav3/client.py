@@ -106,6 +106,59 @@ class Client(object):
         'set_property': ["Accept: */*", "Depth: 1", "Content-Type: application/x-www-form-urlencoded"]
     }
 
+    # mapping of actions to WebDAV methods
+    requests = {
+        'options': 'OPTIONS',
+        'download': "GET",
+        'upload': "PUT",
+        'copy': "COPY",
+        'move': "MOVE",
+        'mkdir': "MKCOL",
+        'clean': "DELETE",
+        'check': "HEAD",
+        'list': "PROPFIND",
+        'free': "PROPFIND",
+        'info': "PROPFIND",
+        'publish': "PROPPATCH",
+        'unpublish': "PROPPATCH",
+        'published': "PROPPATCH",
+        'get_property': "PROPFIND",
+        'set_property': "PROPPATCH"
+    }
+
+    meta_xmlns = {
+        'https://webdav.yandex.ru': "urn:yandex:disk:meta",
+    }
+
+    def __init__(self, options):
+        """Constructor of WebDAV client
+
+        :param options: the dictionary of connection options to WebDAV.
+            WebDev settings:
+            `webdav_hostname`: url for WebDAV server should contain protocol and ip address or domain name.
+                               Example: `https://webdav.server.com`.
+            `webdav_login`: (optional) login name for WebDAV server can be empty in case using of token auth.
+            `webdav_password`: (optional) password for WebDAV server can be empty in case using of token auth.
+            `webdav_token': (optional) token for WebDAV server can be empty in case using of login/password auth.
+            `webdav_root`: (optional) root directory of WebDAV server. Defaults is `/`.
+            `webdav_cert_path`: (optional) path to certificate.
+            `webdav_key_path`: (optional) path to private key.
+            `webdav_recv_speed`: (optional) rate limit data download speed in Bytes per second.
+                                 Defaults to unlimited speed.
+            `webdav_send_speed`: (optional) rate limit data upload speed in Bytes per second.
+                                 Defaults to unlimited speed.
+            `webdav_verbose`: (optional) set verbose mode on.off. By default verbose mode is off.
+
+        """
+        webdav_options = get_options(option_type=WebDAVSettings, from_options=options)
+
+        self.webdav = WebDAVSettings(webdav_options)
+        response = self.execute_request('options', '')
+        self.supported_methods = response.headers.get('Allow')
+        if 'HEAD' not in self.supported_methods:
+            self.requests['check'] = 'GET'
+        self.default_options = {}
+
     def get_headers(self, action, headers_ext=None):
         """Returns HTTP headers of specified WebDAV actions.
 
@@ -180,54 +233,6 @@ class Client(object):
             raise ResponseErrorCode(url=self.get_url(path), code=response.status_code, message=response.content)
         return response
 
-    # mapping of actions to WebDAV methods
-    requests = {
-        'download': "GET",
-        'upload': "PUT",
-        'copy': "COPY",
-        'move': "MOVE",
-        'mkdir': "MKCOL",
-        'clean': "DELETE",
-        'check': "GET",
-        'list': "PROPFIND",
-        'free': "PROPFIND",
-        'info': "PROPFIND",
-        'publish': "PROPPATCH",
-        'unpublish': "PROPPATCH",
-        'published': "PROPPATCH",
-        'get_property': "PROPFIND",
-        'set_property': "PROPPATCH"
-    }
-
-    meta_xmlns = {
-        'https://webdav.yandex.ru': "urn:yandex:disk:meta",
-    }
-
-    def __init__(self, options):
-        """Constructor of WebDAV client
-
-        :param options: the dictionary of connection options to WebDAV.
-            WebDev settings:
-            `webdav_hostname`: url for WebDAV server should contain protocol and ip address or domain name.
-                               Example: `https://webdav.server.com`.
-            `webdav_login`: (optional) login name for WebDAV server can be empty in case using of token auth.
-            `webdav_password`: (optional) password for WebDAV server can be empty in case using of token auth.
-            `webdav_token': (optional) token for WebDAV server can be empty in case using of login/password auth.
-            `webdav_root`: (optional) root directory of WebDAV server. Defaults is `/`.
-            `webdav_cert_path`: (optional) path to certificate.
-            `webdav_key_path`: (optional) path to private key.
-            `webdav_recv_speed`: (optional) rate limit data download speed in Bytes per second.
-                                 Defaults to unlimited speed.
-            `webdav_send_speed`: (optional) rate limit data upload speed in Bytes per second.
-                                 Defaults to unlimited speed.
-            `webdav_verbose`: (optional) set verbose mode on.off. By default verbose mode is off.
-
-        """
-        webdav_options = get_options(option_type=WebDAVSettings, from_options=options)
-
-        self.webdav = WebDAVSettings(webdav_options)
-        self.default_options = {}
-
     def valid(self):
         """Validates of WebDAV settings.
 
@@ -300,7 +305,11 @@ class Client(object):
         if not self.check(directory_urn.parent()):
             raise RemoteParentNotFound(directory_urn.path())
 
-        response = self.execute_request(action='mkdir', path=directory_urn.quote())
+        try:
+            response = self.execute_request(action='mkdir', path=directory_urn.quote())
+        except MethodNotSupported:
+            # Yandex WebDAV returns 405 status code when directory already exists
+            return True
         return response.status_code in (200, 201)
 
     @wrap_connection_error
