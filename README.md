@@ -279,6 +279,9 @@ res1.write_async(local_path="~/Downloads/file1", callback)
 
 Release Notes
 -------------
+**Version 0.14 – TBD**
+ * Fixed an issue with checking resources on Yandex WebDAV server
+
 **Version 0.13 – 27.11.2019**
  * Main version of Python is updated up to 3.7
  * Switch to use python sessions rather than requests by https://github.com/delrey1
