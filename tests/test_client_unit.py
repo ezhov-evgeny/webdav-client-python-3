@@ -135,6 +135,7 @@ class ClientTestCase(TestCase):
         except:
             f = open('./tests/response_dir.xml')
             content = f.read().decode('utf-8').encode('utf-8')
+        f.close()
         path = '/test_dir'
         hostname = 'https://webdav.yandex.ru'
         result = utils.parse_is_dir_response(content, path, hostname)
