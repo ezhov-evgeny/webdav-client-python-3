@@ -3,6 +3,7 @@ import shutil
 import unittest
 from io import BytesIO, StringIO
 from os import path
+from time import sleep
 from unittest import TestCase
 
 from webdav3.client import Client
@@ -21,13 +22,20 @@ class ClientTestCase(TestCase):
     local_file_path = local_base_dir + 'test.txt'
     local_path_dir = local_base_dir + 'res/test_dir'
 
+    options = {
+        'webdav_hostname': 'http://localhost:8585',
+        'webdav_login': 'alice',
+        'webdav_password': 'secret1234'
+    }
+
+    # options = {
+    #     'webdav_hostname': 'https://webdav.yandex.ru',
+    #     'webdav_login': 'webdavclient.test2',
+    #     'webdav_password': 'Qwerty123!'
+    # }
+
     def setUp(self):
-        options = {
-            'webdav_hostname': 'http://localhost:8585',
-            'webdav_login': 'alice',
-            'webdav_password': 'secret1234'
-        }
-        self.client = Client(options)
+        self.client = Client(self.options)
         if path.exists(path=self.local_path_dir):
             shutil.rmtree(path=self.local_path_dir)
 
@@ -46,7 +54,10 @@ class ClientTestCase(TestCase):
         self.assertGreater(file_list.__len__(), 0, 'Expected that amount of files more then 0')
 
     def test_free(self):
-        with self.assertRaises(MethodNotSupported):
+        if 'localhost' in self.options['webdav_hostname']:
+            with self.assertRaises(MethodNotSupported):
+                self.client.free()
+        else:
             self.assertGreater(self.client.free(), 0, 'Expected that free space on WebDAV server is more then 0 bytes')
 
     def test_check(self):
@@ -101,6 +112,8 @@ class ClientTestCase(TestCase):
                                    remote_path=self.remote_path_file, callback=callback)
         self.assertFalse(path.exists(self.local_path_dir + os.path.sep + self.local_file),
                          'Expected the file has not been downloaded yet')
+        # It needs for ending download before environment will be cleaned in tearDown
+        sleep(0.4)
 
     def test_upload_from(self):
         self._prepare_for_uploading()
