@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 from setuptools.command.install import install as InstallCommand
 from setuptools.command.test import test as TestCommand
 
-version = "0.13"
+version = "0.14"
 requirements = "libxml2-dev libxslt-dev python-dev"
 
 
