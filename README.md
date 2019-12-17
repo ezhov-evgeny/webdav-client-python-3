@@ -279,7 +279,7 @@ res1.write_async(local_path="~/Downloads/file1", callback)
 
 Release Notes
 -------------
-**Version 0.14 – TBD**
+**Version 0.14**
  * Fixed an issue with checking resources on Yandex WebDAV server
 
 **Version 0.13 – 27.11.2019**
