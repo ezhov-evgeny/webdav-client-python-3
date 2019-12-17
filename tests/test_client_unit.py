@@ -4,7 +4,7 @@ from unittest import TestCase
 
 from lxml.etree import ElementTree, Element
 
-from webdav3.client import WebDavXmlUtils as utils
+from webdav3.client import WebDavXmlUtils as utils, listdir
 
 
 class ClientTestCase(TestCase):
@@ -155,6 +155,11 @@ class ClientTestCase(TestCase):
         hostname = 'https://webdav.yandex.ru'
         result = utils.parse_is_dir_response(content.encode('utf-8'), path, hostname)
         self.assertFalse(result, 'It should be file')
+
+    def test_listdir_inner_dir(self):
+        file_names = listdir('.')
+        self.assertGreater(len(file_names), 0)
+        self.assertTrue('webdav3/' in file_names)
 
 
 if __name__ == '__main__':

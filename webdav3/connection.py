@@ -68,3 +68,4 @@ class WebDAVSettings(ConnectionSettings):
 
         if not self.token and not self.login:
             raise OptionNotValid(name="login", value=self.login, ns=self.ns)
+        return True

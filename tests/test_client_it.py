@@ -1,51 +1,14 @@
 import os.path
-import shutil
 import unittest
 from io import BytesIO, StringIO
 from os import path
 from time import sleep
-from unittest import TestCase
 
-from webdav3.client import Client
-from webdav3.exceptions import MethodNotSupported
+from tests.base_client_it import BaseClientTestCase
+from webdav3.exceptions import MethodNotSupported, OptionNotValid, RemoteResourceNotFound
 
 
-class ClientTestCase(TestCase):
-    remote_path_file = 'test_dir/test.txt'
-    remote_path_file2 = 'test_dir2/test.txt'
-    remote_inner_path_file = 'test_dir/inner/test.txt'
-    remote_path_dir = 'test_dir'
-    remote_path_dir2 = 'test_dir2'
-    remote_inner_path_dir = 'test_dir/inner'
-    local_base_dir = 'tests/'
-    local_file = 'test.txt'
-    local_file_path = local_base_dir + 'test.txt'
-    local_path_dir = local_base_dir + 'res/test_dir'
-
-    options = {
-        'webdav_hostname': 'http://localhost:8585',
-        'webdav_login': 'alice',
-        'webdav_password': 'secret1234'
-    }
-
-    # options = {
-    #     'webdav_hostname': 'https://webdav.yandex.ru',
-    #     'webdav_login': 'webdavclient.test2',
-    #     'webdav_password': 'Qwerty123!'
-    # }
-
-    def setUp(self):
-        self.client = Client(self.options)
-        if path.exists(path=self.local_path_dir):
-            shutil.rmtree(path=self.local_path_dir)
-
-    def tearDown(self):
-        if path.exists(path=self.local_path_dir):
-            shutil.rmtree(path=self.local_path_dir)
-        if self.client.check(remote_path=self.remote_path_dir):
-            self.client.clean(remote_path=self.remote_path_dir)
-        if self.client.check(remote_path=self.remote_path_dir2):
-            self.client.clean(remote_path=self.remote_path_dir2)
+class ClientTestCase(BaseClientTestCase):
 
     def test_list(self):
         self._prepare_for_downloading()
@@ -69,11 +32,28 @@ class ClientTestCase(TestCase):
         self.client.mkdir(remote_path=self.remote_path_dir)
         self.assertTrue(self.client.check(remote_path=self.remote_path_dir), 'Expected the directory is created.')
 
-    def test_download_to(self):
+    def test_download_from(self):
         self._prepare_for_downloading()
         buff = BytesIO()
         self.client.download_from(buff=buff, remote_path=self.remote_path_file)
         self.assertEqual(buff.getvalue(), b'test content for testing of webdav client')
+
+    def test_download_from_dir(self):
+        self._prepare_for_downloading()
+        buff = BytesIO()
+        with self.assertRaises(OptionNotValid):
+            self.client.download_from(buff=buff, remote_path=self.remote_path_dir)
+
+    def test_download_from_wrong_file(self):
+        self._prepare_for_downloading()
+        buff = BytesIO()
+        with self.assertRaises(RemoteResourceNotFound):
+            self.client.download_from(buff=buff, remote_path='wrong')
+
+    def test_download_directory_wrong(self):
+        self._prepare_for_downloading()
+        with self.assertRaises(RemoteResourceNotFound):
+            self.client.download_directory(remote_path=self.remote_path_file, local_path=self.local_path_dir)
 
     def test_download(self):
         self._prepare_for_downloading()
@@ -241,26 +221,8 @@ class ClientTestCase(TestCase):
         self.assertTrue(self.client.check(self.remote_path_dir), 'Expected the directory is created.')
         self.assertTrue(self.client.check(self.remote_path_file), 'Expected the file is uploaded.')
 
-    def _prepare_for_downloading(self, inner_dir=False):
-        if not self.client.check(remote_path=self.remote_path_dir):
-            self.client.mkdir(remote_path=self.remote_path_dir)
-        if not self.client.check(remote_path=self.remote_path_file):
-            self.client.upload_file(remote_path=self.remote_path_file, local_path=self.local_file_path)
-        if not path.exists(self.local_path_dir):
-            os.makedirs(self.local_path_dir)
-        if inner_dir:
-            if not self.client.check(remote_path=self.remote_inner_path_dir):
-                self.client.mkdir(remote_path=self.remote_inner_path_dir)
-            if not self.client.check(remote_path=self.remote_inner_path_file):
-                self.client.upload_file(remote_path=self.remote_inner_path_file, local_path=self.local_file_path)
-
-    def _prepare_for_uploading(self):
-        if not self.client.check(remote_path=self.remote_path_dir):
-            self.client.mkdir(remote_path=self.remote_path_dir)
-        if not path.exists(path=self.local_path_dir):
-            os.makedirs(self.local_path_dir)
-        if not path.exists(path=self.local_path_dir + os.sep + self.local_file):
-            shutil.copy(src=self.local_file_path, dst=self.local_path_dir + os.sep + self.local_file)
+    def test_valid(self):
+        self.assertTrue(self.client.valid())
 
 
 if __name__ == '__main__':

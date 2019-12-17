@@ -71,7 +71,7 @@ class NoConnection(WebDavException):
         self.hostname = hostname
 
     def __str__(self):
-        return "Not connection with {hostname}".format(hostname=self.hostname)
+        return "No connection with {hostname}".format(hostname=self.hostname)
 
 
 # This exception left only for supporting original library interface.

@@ -277,9 +277,9 @@ class Client(object):
         :param remote_path: (optional) path to resource on WebDAV server. Defaults is root directory of WebDAV.
         :return: True if resource is exist or False otherwise
         """
-
         if self.webdav.disable_check:
             return True
+
         urn = Urn(remote_path)
         try:
             response = self.execute_request(action='check', path=urn.quote())
@@ -466,7 +466,7 @@ class Client(object):
         self.mkdir(remote_path)
 
         for resource_name in listdir(local_path):
-            _remote_path = "{parent}{name}".format(parent=urn.path(), name=resource_name)
+            _remote_path = "{parent}{name}".format(parent=urn.path(), name=resource_name).replace('\\', '')
             _local_path = os.path.join(local_path, resource_name)
             self.upload(local_path=_local_path, remote_path=_remote_path, progress=progress)
 
@@ -588,12 +588,15 @@ class Client(object):
                  `modified`: date of resource modification.
         """
         urn = Urn(remote_path)
-        if not self.check(urn.path()) and not self.check(Urn(remote_path, directory=True).path()):
-            raise RemoteResourceNotFound(remote_path)
+        self._check_remote_resource(remote_path, urn)
 
         response = self.execute_request(action='info', path=urn.quote())
         path = self.get_full_path(urn)
         return WebDavXmlUtils.parse_info_response(content=response.content, path=path, hostname=self.webdav.hostname)
+
+    def _check_remote_resource(self, remote_path, urn):
+        if not self.check(urn.path()) and not self.check(Urn(remote_path, directory=True).path()):
+            raise RemoteResourceNotFound(remote_path)
 
     @wrap_connection_error
     def is_dir(self, remote_path):
@@ -605,8 +608,7 @@ class Client(object):
         """
         urn = Urn(remote_path)
         parent_urn = Urn(urn.parent())
-        if not self.check(urn.path()) and not self.check(Urn(remote_path, directory=True).path()):
-            raise RemoteResourceNotFound(remote_path)
+        self._check_remote_resource(remote_path, urn)
 
         response = self.execute_request(action='info', path=parent_urn.quote())
         path = self.get_full_path(urn)
@@ -826,6 +828,9 @@ class Resource(object):
 
 
 class WebDavXmlUtils:
+    def __init__(self):
+        pass
+
     @staticmethod
     def parse_get_list_response(content):
         """Parses of response content XML from WebDAV server and extract file and directory names.
