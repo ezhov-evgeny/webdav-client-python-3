@@ -101,7 +101,7 @@ class Client(object):
         'mkdir': ["Accept: */*", "Connection: Keep-Alive"],
         'clean': ["Accept: */*", "Connection: Keep-Alive"],
         'check': ["Accept: */*"],
-        'info': ["Accept: */*", "Depth: 1"],
+        'info': ["Accept: */*", "Depth: 0"],
         'get_property': ["Accept: */*", "Depth: 1", "Content-Type: application/x-www-form-urlencoded"],
         'set_property': ["Accept: */*", "Depth: 1", "Content-Type: application/x-www-form-urlencoded"]
     }
@@ -249,7 +249,7 @@ class Client(object):
         :return: list of nested file or directory names.
         """
         directory_urn = Urn(remote_path, directory=True)
-        if directory_urn.path() != Client.root and not self.check(directory_urn.path()):
+        if directory_urn.path() != Client.root and not self.is_dir(directory_urn.path()):
             raise RemoteResourceNotFound(directory_urn.path())
 
         response = self.execute_request(action='list', path=directory_urn.quote())
@@ -273,6 +273,8 @@ class Client(object):
     def check(self, remote_path=root):
         """Checks an existence of remote resource on WebDAV server by remote path.
         More information you can find by link http://webdav.org/specs/rfc4918.html#rfc.section.9.4
+        Note: This action uses the webdav HEAD method internally. Contrary to the RFC document, 
+        some webdav servers (e.g. Synology NAS) do not implement the HEAD method on folders.
 
         :param remote_path: (optional) path to resource on WebDAV server. Defaults is root directory of WebDAV.
         :return: True if resource is exist or False otherwise
