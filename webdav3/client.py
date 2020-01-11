@@ -10,6 +10,7 @@ from re import sub
 
 import lxml.etree as etree
 import requests
+from dateutil import parser as dateutil_parser
 
 from webdav3.connection import *
 from webdav3.exceptions import *
@@ -700,11 +701,12 @@ class Client(object):
                 self.push(remote_directory=remote_path, local_directory=local_path)
             else:
                 if local_resource_name in remote_resource_names:
-                    continue
+                    if self.is_local_more_recent(local_path, remote_path):
+                        continue
                 self.upload_file(remote_path=remote_path, local_path=local_path)
 
-    def pull(self, remote_directory, local_directory):
 
+    def pull(self, remote_directory, local_directory):
         def prune(src, exp):
             return [sub(exp, "", item) for item in src]
 
@@ -739,13 +741,41 @@ class Client(object):
                 self.pull(remote_directory=remote_path, local_directory=local_path)
             else:
                 if remote_resource_name in local_resource_names:
-                    continue
+                    # Skip pull if local resource is more recent of we can't tell
+                    if self.is_local_more_recent(local_path, remote_path) in (True, None):
+                        continue
+
                 self.download_file(remote_path=remote_path, local_path=local_path)
                 updated = True
         return updated
 
-    def sync(self, remote_directory, local_directory):
 
+    def is_local_more_recent(self, local_path, remote_path):
+        """Tells if local resource is more recent that the remote on if possible
+
+        :param local_path: the path to local resource.
+        :param remote_path: the path to remote resource.
+
+        :return: True if local resource is more recent, False if the remote one is
+                 None if comparison is not possible
+        """
+        try:
+            remote_info = self.info(remote_path)
+            # Try to compare modification dates if our server
+            # offers that information
+            remote_last_mod_date = remote_info['modified']
+            remote_last_mod_date = dateutil_parser.parse(remote_last_mod_date)
+            remote_last_mod_date_unix_ts = int(remote_last_mod_date.strftime("%s"))
+            local_last_mod_date_unix_ts = os.stat(local_path).st_mtime
+
+            return (local_last_mod_date_unix_ts > remote_last_mod_date_unix_ts)
+        except:
+            # If there is problem when parsing dates, or cannot get
+            # last modified information, return None
+            return None
+
+
+    def sync(self, remote_directory, local_directory):
         self.pull(remote_directory=remote_directory, local_directory=local_directory)
         self.push(remote_directory=remote_directory, local_directory=local_directory)
 
