@@ -33,12 +33,12 @@ client.execute_request("mkdir", 'directory_name')
 Webdav API
 ==========
 
-Webdav API is a set of webdav methods of work with cloud storage. This set includes the following methods:
+Webdav API is a set of webdav actions of work with cloud storage. This set includes the following actions:
 `check`, `free`, `info`, `list`, `mkdir`, `clean`, `copy`, `move`, `download`, `upload`, `publish` and `unpublish`.
 
 **Configuring the client**
 
-Required keys for configuring client connection with WevDAV-server are webdav\_hostname and webdav\_login, webdav\_password.
+Required keys for configuring client connection with WevDAV-server are `webdav_hostname` and `webdav_login`, `webdav_password`.
 
 ```python
 from webdav3.client import Client
@@ -47,6 +47,25 @@ options = {
  'webdav_hostname': "https://webdav.server.ru",
  'webdav_login':    "login",
  'webdav_password': "password"
+}
+client = Client(options)
+```
+
+If your server does not support `HEAD` method or there are other reasons to override default WebDAV methods for actions use a dictionary option `webdav_override_methods`. 
+The key should be in the following list: `check`, `free`, `info`, `list`, `mkdir`, `clean`, `copy`, `move`, `download`, `upload`,
+ `publish` and `unpublish`. The value should a string name of WebDAV method, for example `GET`.
+ 
+```python
+from webdav3.client import Client
+
+options = {
+ 'webdav_hostname': "https://webdav.server.ru",
+ 'webdav_login':    "login",
+ 'webdav_password': "password",
+ 'webdav_override_methods': {
+            'check': 'GET'
+        }
+
 }
 client = Client(options)
 ```
