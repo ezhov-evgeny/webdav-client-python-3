@@ -153,10 +153,7 @@ class Client(object):
         webdav_options = get_options(option_type=WebDAVSettings, from_options=options)
 
         self.webdav = WebDAVSettings(webdav_options)
-        response = self.execute_request('options', '')
-        self.supported_methods = response.headers.get('Allow')
-        if 'HEAD' not in self.supported_methods:
-            self.requests['check'] = 'GET'
+        self.requests.update(self.webdav.override_methods)
         self.default_options = {}
 
     def get_headers(self, action, headers_ext=None):

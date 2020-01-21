@@ -224,6 +224,9 @@ class ClientTestCase(BaseClientTestCase):
     def test_valid(self):
         self.assertTrue(self.client.valid())
 
+    def test_check_is_overridden(self):
+        self.assertEqual('GET', self.client.requests['check'])
+
 
 if __name__ == '__main__':
     unittest.main()
