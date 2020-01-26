@@ -89,11 +89,8 @@ class Client(object):
     # controls whether to verify the server's TLS certificate or not
     verify = True
 
-    # Sets the session for subsequent requests
-    session = requests.Session()
-
     # HTTP headers for different actions
-    http_header = {
+    default_http_header = {
         'list': ["Accept: */*", "Depth: 1"],
         'free': ["Accept: */*", "Depth: 0", "Content-Type: text/xml"],
         'copy': ["Accept: */*"],
@@ -107,7 +104,7 @@ class Client(object):
     }
 
     # mapping of actions to WebDAV methods
-    requests = {
+    default_requests = {
         'options': 'OPTIONS',
         'download': "GET",
         'upload': "PUT",
@@ -150,6 +147,9 @@ class Client(object):
             `webdav_verbose`: (optional) set verbose mode on.off. By default verbose mode is off.
 
         """
+        self.session = requests.Session()
+        self.http_header = Client.default_http_header.copy()
+        self.requests = Client.default_requests.copy()
         webdav_options = get_options(option_type=WebDAVSettings, from_options=options)
 
         self.webdav = WebDAVSettings(webdav_options)
@@ -164,11 +164,11 @@ class Client(object):
                             the specified action.
         :return: the dictionary of headers for specified action.
         """
-        if action in Client.http_header:
+        if action in self.http_header:
             try:
-                headers = Client.http_header[action].copy()
+                headers = self.http_header[action].copy()
             except AttributeError:
-                headers = Client.http_header[action][:]
+                headers = self.http_header[action][:]
         else:
             headers = list()
 
@@ -211,7 +211,7 @@ class Client(object):
         if self.session.auth:
             self.session.request(method="GET", url=self.webdav.hostname, verify=self.verify)  # (Re)Authenticates against the proxy
         response = self.session.request(
-            method=Client.requests[action],
+            method=self.requests[action],
             url=self.get_url(path),
             auth=(self.webdav.login, self.webdav.password),
             headers=self.get_headers(action, headers_ext),

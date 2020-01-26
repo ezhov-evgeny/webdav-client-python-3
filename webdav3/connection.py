@@ -27,20 +27,20 @@ class WebDAVSettings(ConnectionSettings):
     keys = {'hostname', 'login', 'password', 'token', 'root', 'cert_path', 'key_path', 'recv_speed', 'send_speed',
             'verbose', 'disable_check', 'override_methods'}
 
-    hostname = None
-    login = None
-    password = None
-    token = None
-    root = None
-    cert_path = None
-    key_path = None
-    recv_speed = None
-    send_speed = None
-    verbose = None
-    disable_check = False
-    override_methods = {}
-
     def __init__(self, options):
+        self.hostname = None
+        self.login = None
+        self.password = None
+        self.token = None
+        self.root = None
+        self.cert_path = None
+        self.key_path = None
+        self.recv_speed = None
+        self.send_speed = None
+        self.verbose = None
+        self.disable_check = False
+        self.override_methods = {}
+
         self.options = dict()
 
         for key in self.keys:
