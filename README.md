@@ -298,6 +298,10 @@ res1.write_async(local_path="~/Downloads/file1", callback)
 
 Release Notes
 -------------
+**Version 3.14**
+ * Override methods for customizing communication with WebDAV servers
+ * Support multiple clients simultaneously
+
 **Version 0.14**
  * Fixed an issue with checking resources on Yandex WebDAV server
 
