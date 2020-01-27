@@ -13,6 +13,7 @@ services:
 python:
   - "2.7"
   - "3.7"
+  - "3.8"
 
 before_install:
   - docker pull bytemark/webdav
@@ -25,4 +26,7 @@ install:
 script:
   - coverage run setup.py test
   - coverage xml
-  - sonar-scanner
+  - |
+    if [[ $TRAVIS_PYTHON_VERSION == "3.8" ]]; then
+      sonar-scanner
+    fi
