@@ -21,7 +21,10 @@ class BaseClientTestCase(unittest.TestCase):
     options = {
         'webdav_hostname': 'http://localhost:8585',
         'webdav_login': 'alice',
-        'webdav_password': 'secret1234'
+        'webdav_password': 'secret1234',
+        'webdav_override_methods': {
+            'check': 'GET'
+        }
     }
 
     # options = {
