@@ -301,6 +301,7 @@ Release Notes
 **Version 3.14**
  * Override methods for customizing communication with WebDAV servers
  * Support multiple clients simultaneously
+ * Sync modified files during pull and push by https://github.com/mont5piques
 
 **Version 0.14**
  * Fixed an issue with checking resources on Yandex WebDAV server
