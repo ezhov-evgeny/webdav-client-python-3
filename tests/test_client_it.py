@@ -1,4 +1,5 @@
 import os.path
+import shutil
 import unittest
 from io import BytesIO, StringIO
 from os import path
@@ -9,6 +10,7 @@ from webdav3.exceptions import MethodNotSupported, OptionNotValid, RemoteResourc
 
 
 class ClientTestCase(BaseClientTestCase):
+    pulled_file = BaseClientTestCase.local_path_dir + os.sep + BaseClientTestCase.local_file
 
     def test_list(self):
         self._prepare_for_downloading()
@@ -226,6 +228,55 @@ class ClientTestCase(BaseClientTestCase):
 
     def test_check_is_overridden(self):
         self.assertEqual('GET', self.client.requests['check'])
+
+    def test_pull_newer(self):
+        init_modification_time = int(self._prepare_local_test_file_and_get_modification_time())
+        sleep(1)
+        self._prepare_for_downloading(base_path='time/')
+        result = self.client.pull('time/' + self.remote_path_dir, self.local_path_dir)
+        update_modification_time = int(os.path.getmtime(self.pulled_file))
+        self.assertTrue(result)
+        self.assertGreater(update_modification_time, init_modification_time)
+        self.client.clean(remote_path='time/' + self.remote_path_dir)
+
+    def test_pull_older(self):
+        self._prepare_for_downloading(base_path='time/')
+        sleep(1)
+        init_modification_time = int(self._prepare_local_test_file_and_get_modification_time())
+        result = self.client.pull('time/' + self.remote_path_dir, self.local_path_dir)
+        update_modification_time = int(os.path.getmtime(self.pulled_file))
+        self.assertFalse(result)
+        self.assertEqual(update_modification_time, init_modification_time)
+        self.client.clean(remote_path='time/' + self.remote_path_dir)
+
+    def test_push_newer(self):
+        self._prepare_for_downloading(base_path='time/')
+        sleep(1)
+        self._prepare_for_uploading()
+        init_modification_time = self.client.info('time/' + self.remote_path_file)['modified']
+        result = self.client.push('time/' + self.remote_path_dir, self.local_path_dir)
+        update_modification_time = self.client.info('time/' + self.remote_path_file)['modified']
+        self.assertTrue(result)
+        self.assertNotEqual(init_modification_time, update_modification_time)
+        self.client.clean(remote_path='time/' + self.remote_path_dir)
+
+    def test_push_older(self):
+        self._prepare_for_uploading()
+        sleep(1)
+        self._prepare_for_downloading(base_path='time/')
+        init_modification_time = self.client.info('time/' + self.remote_path_file)['modified']
+        result = self.client.push('time/' + self.remote_path_dir, self.local_path_dir)
+        update_modification_time = self.client.info('time/' + self.remote_path_file)['modified']
+        self.assertFalse(result)
+        self.assertEqual(init_modification_time, update_modification_time)
+        self.client.clean(remote_path='time/' + self.remote_path_dir)
+
+    def _prepare_local_test_file_and_get_modification_time(self):
+        if not path.exists(path=self.local_path_dir):
+            os.mkdir(self.local_path_dir)
+        if not path.exists(path=self.local_path_dir + os.sep + self.local_file):
+            shutil.copy(src=self.local_file_path, dst=self.pulled_file)
+        return os.path.getmtime(self.pulled_file)
 
 
 if __name__ == '__main__':

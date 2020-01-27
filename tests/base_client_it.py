@@ -35,29 +35,39 @@ class BaseClientTestCase(unittest.TestCase):
 
     def setUp(self):
         self.client = Client(self.options)
-        if path.exists(path=self.local_path_dir):
-            shutil.rmtree(path=self.local_path_dir)
+        self.clean_local_dir(self.local_path_dir)
 
     def tearDown(self):
-        if path.exists(path=self.local_path_dir):
-            shutil.rmtree(path=self.local_path_dir)
-        if self.client.check(remote_path=self.remote_path_dir):
-            self.client.clean(remote_path=self.remote_path_dir)
-        if self.client.check(remote_path=self.remote_path_dir2):
-            self.client.clean(remote_path=self.remote_path_dir2)
+        self.clean_local_dir(self.local_path_dir)
+        self.clean_remote_dir(self.remote_path_dir)
+        self.clean_remote_dir(self.remote_path_dir2)
 
-    def _prepare_for_downloading(self, inner_dir=False):
-        if not self.client.check(remote_path=self.remote_path_dir):
-            self.client.mkdir(remote_path=self.remote_path_dir)
-        if not self.client.check(remote_path=self.remote_path_file):
-            self.client.upload_file(remote_path=self.remote_path_file, local_path=self.local_file_path)
+    def clean_remote_dir(self, remote_path_dir):
+        if self.client.check(remote_path=remote_path_dir):
+            self.client.clean(remote_path=remote_path_dir)
+
+    @staticmethod
+    def clean_local_dir(local_path_dir):
+        if path.exists(path=local_path_dir):
+            shutil.rmtree(path=local_path_dir)
+
+    def _prepare_for_downloading(self, inner_dir=False, base_path=''):
+        if base_path:
+            self._create_remote_dir_if_needed(base_path)
+        self._prepare_dir_for_downloading(base_path + self.remote_path_dir, base_path + self.remote_path_file, self.local_file_path)
         if not path.exists(self.local_path_dir):
             os.makedirs(self.local_path_dir)
         if inner_dir:
-            if not self.client.check(remote_path=self.remote_inner_path_dir):
-                self.client.mkdir(remote_path=self.remote_inner_path_dir)
-            if not self.client.check(remote_path=self.remote_inner_path_file):
-                self.client.upload_file(remote_path=self.remote_inner_path_file, local_path=self.local_file_path)
+            self._prepare_dir_for_downloading(base_path + self.remote_inner_path_dir, base_path + self.remote_inner_path_file, self.local_file_path)
+
+    def _prepare_dir_for_downloading(self, remote_path_dir, remote_path_file, local_file_path):
+        self._create_remote_dir_if_needed(remote_path_dir)
+        if not self.client.check(remote_path=remote_path_file):
+            self.client.upload_file(remote_path=remote_path_file, local_path=local_file_path)
+
+    def _create_remote_dir_if_needed(self, remote_dir):
+        if not self.client.check(remote_path=remote_dir):
+            self.client.mkdir(remote_path=remote_dir)
 
     def _prepare_for_uploading(self):
         if not self.client.check(remote_path=self.remote_path_dir):

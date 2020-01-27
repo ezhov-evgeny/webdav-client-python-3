@@ -671,51 +671,39 @@ class Client(object):
         def prune(src, exp):
             return [sub(exp, "", item) for item in src]
 
+        updated = False
         urn = Urn(remote_directory, directory=True)
-
-        if not self.is_dir(urn.path()):
-            raise OptionNotValid(name="remote_path", value=remote_directory)
-
-        if not os.path.isdir(local_directory):
-            raise OptionNotValid(name="local_path", value=local_directory)
-
-        if not os.path.exists(local_directory):
-            raise LocalResourceNotFound(local_directory)
+        self._validate_remote_directory(urn)
+        self._validate_local_directory(local_directory)
 
         paths = self.list(urn.path())
         expression = "{begin}{end}".format(begin="^", end=urn.path())
         remote_resource_names = prune(paths, expression)
 
         for local_resource_name in listdir(local_directory):
-
             local_path = os.path.join(local_directory, local_resource_name)
-            remote_path = "{remote_directory}{resource_name}".format(remote_directory=urn.path(),
-                                                                     resource_name=local_resource_name)
+            remote_path = "{remote_directory}{resource_name}".format(remote_directory=urn.path(), resource_name=local_resource_name)
 
             if os.path.isdir(local_path):
                 if not self.check(remote_path=remote_path):
                     self.mkdir(remote_path=remote_path)
-                self.push(remote_directory=remote_path, local_directory=local_path)
+                result = self.push(remote_directory=remote_path, local_directory=local_path)
+                updated = updated or result
             else:
-                if local_resource_name in remote_resource_names:
-                    if self.is_local_more_recent(local_path, remote_path):
-                        continue
+                if local_resource_name in remote_resource_names and not self.is_local_more_recent(local_path, remote_path):
+                    continue
                 self.upload_file(remote_path=remote_path, local_path=local_path)
-
+                updated = True
+            return updated
 
     def pull(self, remote_directory, local_directory):
         def prune(src, exp):
             return [sub(exp, "", item) for item in src]
 
         updated = False
-
         urn = Urn(remote_directory, directory=True)
-
-        if not self.is_dir(urn.path()):
-            raise OptionNotValid(name="remote_path", value=remote_directory)
-
-        if not os.path.exists(local_directory):
-            raise LocalResourceNotFound(local_directory)
+        self._validate_remote_directory(urn)
+        self._validate_local_directory(local_directory)
 
         local_resource_names = listdir(local_directory)
 
@@ -724,23 +712,19 @@ class Client(object):
         remote_resource_names = prune(paths, expression)
 
         for remote_resource_name in remote_resource_names:
-
             local_path = os.path.join(local_directory, remote_resource_name)
-            remote_path = "{remote_directory}{resource_name}".format(remote_directory=urn.path(),
-                                                                     resource_name=remote_resource_name)
-
+            remote_path = "{remote_directory}{resource_name}".format(remote_directory=urn.path(), resource_name=remote_resource_name)
             remote_urn = Urn(remote_path)
 
             if remote_urn.path().endswith("/"):
                 if not os.path.exists(local_path):
                     updated = True
                     os.mkdir(local_path)
-                self.pull(remote_directory=remote_path, local_directory=local_path)
+                result = self.pull(remote_directory=remote_path, local_directory=local_path)
+                updated = updated or result
             else:
-                if remote_resource_name in local_resource_names:
-                    # Skip pull if local resource is more recent of we can't tell
-                    if self.is_local_more_recent(local_path, remote_path) in (True, None):
-                        continue
+                if remote_resource_name in local_resource_names and self.is_local_more_recent(local_path, remote_path):
+                    continue
 
                 self.download_file(remote_path=remote_path, local_path=local_path)
                 updated = True
@@ -757,15 +741,13 @@ class Client(object):
         """
         try:
             remote_info = self.info(remote_path)
-            # Try to compare modification dates if our server
-            # offers that information
             remote_last_mod_date = remote_info['modified']
             remote_last_mod_date = dateutil_parser.parse(remote_last_mod_date)
-            remote_last_mod_date_unix_ts = int(remote_last_mod_date.strftime("%s"))
-            local_last_mod_date_unix_ts = os.stat(local_path).st_mtime
+            remote_last_mod_date_unix_ts = int(remote_last_mod_date.timestamp())
+            local_last_mod_date_unix_ts = int(os.stat(local_path).st_mtime)
 
-            return (local_last_mod_date_unix_ts > remote_last_mod_date_unix_ts)
-        except:
+            return remote_last_mod_date_unix_ts < local_last_mod_date_unix_ts
+        except ValueError or RuntimeWarning or KeyError:
             # If there is problem when parsing dates, or cannot get
             # last modified information, return None
             return None
@@ -773,6 +755,18 @@ class Client(object):
     def sync(self, remote_directory, local_directory):
         self.pull(remote_directory=remote_directory, local_directory=local_directory)
         self.push(remote_directory=remote_directory, local_directory=local_directory)
+
+    def _validate_remote_directory(self, urn):
+        if not self.is_dir(urn.path()):
+            raise OptionNotValid(name="remote_path", value=urn.path())
+
+    @staticmethod
+    def _validate_local_directory(local_directory):
+        if not os.path.isdir(local_directory):
+            raise OptionNotValid(name="local_path", value=local_directory)
+
+        if not os.path.exists(local_directory):
+            raise LocalResourceNotFound(local_directory)
 
 
 class Resource(object):
