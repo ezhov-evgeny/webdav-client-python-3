@@ -177,7 +177,7 @@ class Client(object):
             headers.extend(headers_ext)
 
         if self.webdav.token:
-            webdav_token = "Authorization: OAuth {token}".format(token=self.webdav.token)
+            webdav_token = "Authorization: Bearer {token}".format(token=self.webdav.token)
             headers.append(webdav_token)
         return dict([map(lambda s: s.strip(), i.split(':', 1)) for i in headers])
 
@@ -211,16 +211,27 @@ class Client(object):
         """
         if self.session.auth:
             self.session.request(method="GET", url=self.webdav.hostname, verify=self.verify)  # (Re)Authenticates against the proxy
-        response = self.session.request(
-            method=self.requests[action],
-            url=self.get_url(path),
-            auth=(self.webdav.login, self.webdav.password),
-            headers=self.get_headers(action, headers_ext),
-            timeout=self.timeout,
-            data=data,
-            stream=True,
-            verify=self.verify
-        )
+        if all([self.webdav.login, self.webdav.password]) is False:
+            response = self.session.request(
+                method=self.requests[action],
+                url=self.get_url(path),
+                headers=self.get_headers(action, headers_ext),
+                timeout=self.timeout,
+                data=data,
+                stream=True,
+                verify=self.verify
+            )
+        else:
+            response = self.session.request(
+                method=self.requests[action],
+                url=self.get_url(path),
+                auth=(self.webdav.login, self.webdav.password),
+                headers=self.get_headers(action, headers_ext),
+                timeout=self.timeout,
+                data=data,
+                stream=True,
+                verify=self.verify
+            )
         if response.status_code == 507:
             raise NotEnoughSpace()
         if response.status_code == 404:
