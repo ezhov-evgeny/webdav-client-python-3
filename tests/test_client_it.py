@@ -208,10 +208,10 @@ class ClientTestCase(BaseClientTestCase):
         self._prepare_for_downloading(True)
         self.client.pull(self.remote_path_dir, self.local_path_dir)
         self.assertTrue(path.exists(self.local_path_dir), 'Expected the directory is downloaded.')
-        self.assertTrue(path.exists(self.local_path_dir + os.path.sep + 'inner'), 'Expected the directory is downloaded.')
-        self.assertTrue(path.exists(self.local_path_dir + os.path.sep + 'inner'), 'Expected the directory is downloaded.')
+        self.assertTrue(path.exists(self.local_path_dir + os.path.sep + self.inner_dir_name), 'Expected the directory is downloaded.')
+        self.assertTrue(path.exists(self.local_path_dir + os.path.sep + self.inner_dir_name), 'Expected the directory is downloaded.')
         self.assertTrue(path.isdir(self.local_path_dir), 'Expected this is a directory.')
-        self.assertTrue(path.isdir(self.local_path_dir + os.path.sep + 'inner'), 'Expected this is a directory.')
+        self.assertTrue(path.isdir(self.local_path_dir + os.path.sep + self.inner_dir_name), 'Expected this is a directory.')
         self.assertTrue(path.exists(self.local_path_dir + os.path.sep + self.local_file),
                         'Expected the file is downloaded')
         self.assertTrue(path.isfile(self.local_path_dir + os.path.sep + self.local_file),

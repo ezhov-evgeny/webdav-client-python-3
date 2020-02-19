@@ -535,7 +535,7 @@ class Client(object):
             raise RemoteParentNotFound(urn_to.path())
 
         headers = [
-            "Destination: {url}".format(url=self.get_url(urn_to))
+            "Destination: {url}".format(url=self.get_url(urn_to.quote()))
         ]
         if self.is_dir(urn_from.path()):
             headers.append("Depth: {depth}".format(depth=depth))
@@ -558,7 +558,7 @@ class Client(object):
         if not self.check(urn_to.parent()):
             raise RemoteParentNotFound(urn_to.path())
 
-        header_destination = "Destination: {path}".format(path=self.get_url(urn_to))
+        header_destination = "Destination: {path}".format(path=self.get_url(urn_to.quote()))
         header_overwrite = "Overwrite: {flag}".format(flag="T" if overwrite else "F")
         self.execute_request(action='move', path=urn_from.quote(), headers_ext=[header_destination, header_overwrite])
 

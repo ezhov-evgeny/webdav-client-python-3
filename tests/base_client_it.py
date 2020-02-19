@@ -13,6 +13,7 @@ class BaseClientTestCase(unittest.TestCase):
     remote_path_dir = 'test_dir'
     remote_path_dir2 = 'test_dir2'
     remote_inner_path_dir = 'test_dir/inner'
+    inner_dir_name = 'inner'
     local_base_dir = 'tests/'
     local_file = 'test.txt'
     local_file_path = local_base_dir + 'test.txt'
