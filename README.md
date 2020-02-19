@@ -300,6 +300,7 @@ Release Notes
 -------------
 **Version 3.14.1**
  * Fixed issue during coping and moving files with cyrillic names
+ * Support OAuth2 bearer tokens by https://github.com/danielloader
 
 **Version 3.14**
  * Override methods for customizing communication with WebDAV servers

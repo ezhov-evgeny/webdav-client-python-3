@@ -211,27 +211,16 @@ class Client(object):
         """
         if self.session.auth:
             self.session.request(method="GET", url=self.webdav.hostname, verify=self.verify)  # (Re)Authenticates against the proxy
-        if all([self.webdav.login, self.webdav.password]) is False:
-            response = self.session.request(
-                method=self.requests[action],
-                url=self.get_url(path),
-                headers=self.get_headers(action, headers_ext),
-                timeout=self.timeout,
-                data=data,
-                stream=True,
-                verify=self.verify
-            )
-        else:
-            response = self.session.request(
-                method=self.requests[action],
-                url=self.get_url(path),
-                auth=(self.webdav.login, self.webdav.password),
-                headers=self.get_headers(action, headers_ext),
-                timeout=self.timeout,
-                data=data,
-                stream=True,
-                verify=self.verify
-            )
+        response = self.session.request(
+            method=self.requests[action],
+            url=self.get_url(path),
+            auth=(self.webdav.login, self.webdav.password) if not self.webdav.token else None,
+            headers=self.get_headers(action, headers_ext),
+            timeout=self.timeout,
+            data=data,
+            stream=True,
+            verify=self.verify
+        )
         if response.status_code == 507:
             raise NotEnoughSpace()
         if response.status_code == 404:
