@@ -298,6 +298,9 @@ res1.write_async(local_path="~/Downloads/file1", callback)
 
 Release Notes
 -------------
+**Version 3.14.1**
+ * Fixed issue during coping and moving files with cyrillic names
+
 **Version 3.14**
  * Override methods for customizing communication with WebDAV servers
  * Support multiple clients simultaneously
