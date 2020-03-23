@@ -214,7 +214,7 @@ class Client(object):
         response = self.session.request(
             method=self.requests[action],
             url=self.get_url(path),
-            auth=(self.webdav.login, self.webdav.password) if not self.webdav.token else None,
+            auth=(self.webdav.login, self.webdav.password) if (not self.webdav.token and not self.session.auth) else None,
             headers=self.get_headers(action, headers_ext),
             timeout=self.timeout,
             data=data,
