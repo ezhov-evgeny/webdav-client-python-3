@@ -50,6 +50,7 @@ class WebDAVSettings(ConnectionSettings):
 
         self.root = Urn(self.root).quote() if self.root else ''
         self.root = self.root.rstrip(Urn.separate)
+        self.hostname = self.hostname.rstrip(Urn.separate)
 
     def is_valid(self):
         if not self.hostname:
