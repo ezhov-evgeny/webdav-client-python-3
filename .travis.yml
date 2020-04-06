@@ -4,8 +4,7 @@ dist: xenial
 addons:
   sonarcloud:
     organization: "ezhov-evgeny"
-    token:
-      secure: f0f714f3bea6bd103e3eb82724ef3bb0d3b54d1d
+    token: f0f714f3bea6bd103e3eb82724ef3bb0d3b54d1d
 
 services:
   - docker
