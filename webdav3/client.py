@@ -860,8 +860,15 @@ class WebDavXmlUtils:
         """
         try:
             tree = etree.fromstring(content)
-            hrees = [Urn.separate + unquote(urlsplit(hree.text).path) for hree in tree.findall(".//{DAV:}href")]
-            return [Urn(hree) for hree in hrees]
+            urns = []
+            for response in tree.findall(".//{DAV:}response"):
+                href_el = next(iter(response.findall(".//{DAV:}href")), None)
+                if href_el is None:
+                    continue
+                href = Urn.separate + unquote(urlsplit(href_el.text).path)
+                is_dir = len(response.findall(".//{DAV:}collection")) > 0
+                urns.append(Urn(href, is_dir))
+            return urns
         except etree.XMLSyntaxError:
             return list()
 

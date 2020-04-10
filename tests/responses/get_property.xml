@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<d:multistatus xmlns:d="DAV:">
+    <d:response>
+        <d:href>/test_dir/test.txt</d:href>
+        <d:propstat>
+            <d:status>HTTP/1.1 200 OK</d:status>
+            <d:prop>
+                <aProperty xmlns="test">aValue</aProperty>
+            </d:prop>
+        </d:propstat>
+    </d:response>
+</d:multistatus>
