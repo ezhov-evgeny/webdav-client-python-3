@@ -360,6 +360,8 @@ class Client(object):
         os.makedirs(local_path)
 
         for resource_name in self.list(urn.path()):
+            if urn.path().endswith(resource_name):
+                continue
             _remote_path = "{parent}{name}".format(parent=urn.path(), name=resource_name)
             _local_path = os.path.join(local_path, resource_name)
             self.download(local_path=_local_path, remote_path=_remote_path, progress=progress)
