@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<d:multistatus xmlns:d="DAV:">
+    <d:response>
+        <d:href>/</d:href>
+        <d:propstat>
+            <d:status>HTTP/1.1 200 OK</d:status>
+            <d:prop>
+                <d:quota-used-bytes>697</d:quota-used-bytes>
+                <d:quota-available-bytes>10737417543</d:quota-available-bytes>
+            </d:prop>
+        </d:propstat>
+    </d:response>
+</d:multistatus>

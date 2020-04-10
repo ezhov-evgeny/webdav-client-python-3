@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="utf-8"?>
+<D:multistatus xmlns:D="DAV:">
+    <D:response xmlns:lp1="DAV:">
+        <D:href>/</D:href>
+        <D:propstat>
+            <D:prop>
+                <lp1:resourcetype>
+                    <D:collection/>
+                </lp1:resourcetype>
+                <lp1:creationdate>2020-04-06T01:00:26Z</lp1:creationdate>
+                <lp1:getlastmodified>Mon, 06 Apr 2020 01:00:26
+                    GMT
+                </lp1:getlastmodified>
+                <lp1:getetag>"1000-5a294cadf6e8f"</lp1:getetag>
+                <D:supportedlock>
+                    <D:lockentry>
+                        <D:lockscope>
+                            <D:exclusive/>
+                        </D:lockscope>
+
+                        <D:locktype>
+                            <D:write/>
+                        </D:locktype>
+
+                    </D:lockentry>
+
+                    <D:lockentry>
+                        <D:lockscope>
+                            <D:shared/>
+                        </D:lockscope>
+
+                        <D:locktype>
+                            <D:write/>
+                        </D:locktype>
+
+                    </D:lockentry>
+
+                </D:supportedlock>
+                <D:lockdiscovery/>
+                <D:getcontenttype>httpd/unix-directory</D:getcontenttype>
+            </D:prop>
+            <D:status>HTTP/1.1 200 OK</D:status>
+        </D:propstat>
+
+    </D:response>
+
+    <D:response xmlns:lp1="DAV:">
+        <D:href>/test_dir/</D:href>
+        <D:propstat>
+            <D:prop>
+                <lp1:resourcetype>
+                    <D:collection/>
+                </lp1:resourcetype>
+                <lp1:creationdate>2020-04-06T01:00:26Z</lp1:creationdate>
+                <lp1:getlastmodified>Mon, 06 Apr 2020 01:00:26
+                    GMT
+                </lp1:getlastmodified>
+                <lp1:getetag>"1000-5a294cadfbcaf"</lp1:getetag>
+                <D:supportedlock>
+                    <D:lockentry>
+                        <D:lockscope>
+                            <D:exclusive/>
+                        </D:lockscope>
+
+                        <D:locktype>
+                            <D:write/>
+                        </D:locktype>
+
+                    </D:lockentry>
+
+                    <D:lockentry>
+                        <D:lockscope>
+                            <D:shared/>
+                        </D:lockscope>
+
+                        <D:locktype>
+                            <D:write/>
+                        </D:locktype>
+
+                    </D:lockentry>
+
+                </D:supportedlock>
+                <D:lockdiscovery/>
+                <D:getcontenttype>httpd/unix-directory</D:getcontenttype>
+            </D:prop>
+            <D:status>HTTP/1.1 200 OK</D:status>
+        </D:propstat>
+
+    </D:response>
+
+    <D:response xmlns:lp1="DAV:">
+        <D:href>/test</D:href>
+        <D:propstat>
+            <D:prop>
+                <lp1:resourcetype>
+                    <D:collection/>
+                </lp1:resourcetype>
+                <lp1:creationdate>2020-04-05T17:46:17Z</lp1:creationdate>
+                <lp1:getlastmodified>Thu, 28 Nov 2019 19:22:35
+                    GMT
+                </lp1:getlastmodified>
+                <lp1:getetag>"1000-5986d091de6bd"</lp1:getetag>
+                <D:supportedlock>
+                    <D:lockentry>
+                        <D:lockscope>
+                            <D:exclusive/>
+                        </D:lockscope>
+
+                        <D:locktype>
+                            <D:write/>
+                        </D:locktype>
+
+                    </D:lockentry>
+
+                    <D:lockentry>
+                        <D:lockscope>
+                            <D:shared/>
+                        </D:lockscope>
+
+                        <D:locktype>
+                            <D:write/>
+                        </D:locktype>
+
+                    </D:lockentry>
+
+                </D:supportedlock>
+                <D:lockdiscovery/>
+                <D:getcontenttype>httpd/unix-directory</D:getcontenttype>
+            </D:prop>
+            <D:status>HTTP/1.1 200 OK</D:status>
+        </D:propstat>
+
+    </D:response>
+
+    <D:response xmlns:lp1="DAV:">
+        <D:href>/time/</D:href>
+        <D:propstat>
+            <D:prop>
+                <lp1:resourcetype>
+                    <D:collection/>
+                </lp1:resourcetype>
+                <lp1:creationdate>2020-04-06T00:41:42Z</lp1:creationdate>
+                <lp1:getlastmodified>Mon, 06 Apr 2020 00:41:42
+                    GMT
+                </lp1:getlastmodified>
+                <lp1:getetag>"1000-5a29487ed5fb8"</lp1:getetag>
+                <D:supportedlock>
+                    <D:lockentry>
+                        <D:lockscope>
+                            <D:exclusive/>
+                        </D:lockscope>
+
+                        <D:locktype>
+                            <D:write/>
+                        </D:locktype>
+
+                    </D:lockentry>
+
+                    <D:lockentry>
+                        <D:lockscope>
+                            <D:shared/>
+                        </D:lockscope>
+
+                        <D:locktype>
+                            <D:write/>
+                        </D:locktype>
+
+                    </D:lockentry>
+
+                </D:supportedlock>
+                <D:lockdiscovery/>
+                <D:getcontenttype>httpd/unix-directory</D:getcontenttype>
+            </D:prop>
+            <D:status>HTTP/1.1 200 OK</D:status>
+        </D:propstat>
+
+    </D:response>
+
+    <D:response xmlns:lp1="DAV:">
+        <D:href>/non-default/</D:href>
+        <D:propstat>
+            <D:prop>
+                <lp1:resourcetype>
+                    <D:collection/>
+                </lp1:resourcetype>
+                <lp1:creationdate>2020-04-05T17:46:17Z</lp1:creationdate>
+                <lp1:getlastmodified>Mon, 27 Jan 2020 03:37:21
+                    GMT
+                </lp1:getlastmodified>
+                <lp1:getetag>"1000-59d16d32ea4ce"</lp1:getetag>
+                <D:supportedlock>
+                    <D:lockentry>
+                        <D:lockscope>
+                            <D:exclusive/>
+                        </D:lockscope>
+
+                        <D:locktype>
+                            <D:write/>
+                        </D:locktype>
+
+                    </D:lockentry>
+
+                    <D:lockentry>
+                        <D:lockscope>
+                            <D:shared/>
+                        </D:lockscope>
+
+                        <D:locktype>
+                            <D:write/>
+                        </D:locktype>
+
+                    </D:lockentry>
+
+                </D:supportedlock>
+                <D:lockdiscovery/>
+                <D:getcontenttype>httpd/unix-directory</D:getcontenttype>
+            </D:prop>
+            <D:status>HTTP/1.1 200 OK</D:status>
+        </D:propstat>
+
+    </D:response>
+
+</D:multistatus>

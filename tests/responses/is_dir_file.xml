@@ -1,0 +1,30 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<d:multistatus xmlns:d="DAV:">
+    <d:response>
+        <d:href>/test_dir/</d:href>
+        <d:propstat>
+            <d:status>HTTP/1.1 200 OK</d:status>
+            <d:prop>
+                <d:creationdate>2018-05-10T07:40:11Z</d:creationdate>
+                <d:displayname>test_dir</d:displayname>
+                <d:getlastmodified>Thu, 10 May 2018 07:40:11 GMT</d:getlastmodified>
+                <d:resourcetype/>
+            </d:prop>
+        </d:propstat>
+    </d:response>
+    <d:response>
+        <d:href>/test_dir/test.txt</d:href>
+        <d:propstat>
+            <d:status>HTTP/1.1 200 OK</d:status>
+            <d:prop>
+                <d:getetag>ab0b4b7973803c03639b848682b5f38c</d:getetag>
+                <d:creationdate>2018-05-10T07:40:12Z</d:creationdate>
+                <d:displayname>test.txt</d:displayname>
+                <d:getlastmodified>Thu, 10 May 2018 07:40:12 GMT</d:getlastmodified>
+                <d:getcontenttype>text/plain</d:getcontenttype>
+                <d:getcontentlength>41</d:getcontentlength>
+                <d:resourcetype/>
+            </d:prop>
+        </d:propstat>
+    </d:response>
+</d:multistatus>
