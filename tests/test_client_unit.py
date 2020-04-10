@@ -4,7 +4,7 @@ from unittest import TestCase
 
 from lxml.etree import ElementTree, Element
 
-from webdav3.client import WebDavXmlUtils as Utils, listdir
+from webdav3.client import WebDavXmlUtils as Utils, listdir, MethodNotSupported, RemoteResourceNotFound
 
 
 def read_file_content(file_name):
@@ -19,6 +19,17 @@ class ClientTestCase(TestCase):
         self.assertEqual(result.__len__(), 2)
         self.assertTrue(result[0].is_dir(), '{} should be marked as directory'.format(result[0].path()))
         self.assertFalse(result[1].is_dir(), '{} should be marked as file'.format(result[1].path()))
+        self.assertEqual(result[1].__str__(), '/test_dir/test.txt')
+
+    def test_parse_get_list_response_empty(self):
+        content = read_file_content('./tests/responses/get_list_empty.xml')
+        result = Utils.parse_get_list_response(content)
+        self.assertEqual(result.__len__(), 0)
+
+    def test_parse_get_list_response_incorrect(self):
+        content = read_file_content('./tests/responses/get_list_incorrect.xml')
+        result = Utils.parse_get_list_response(content)
+        self.assertEqual(result.__len__(), 0)
 
     def test_parse_get_list_response_dirs(self):
         content = read_file_content('./tests/responses/get_list_directories.xml')
@@ -36,6 +47,15 @@ class ClientTestCase(TestCase):
         content = read_file_content('./tests/responses/free_space.xml')
         result = Utils.parse_free_space_response(content, 'localhost')
         self.assertEqual(result, 10737417543)
+
+    def test_parse_free_space_response_not_supported(self):
+        content = read_file_content('./tests/responses/free_space_not_supported.xml')
+        self.assertRaises(MethodNotSupported, Utils.parse_free_space_response, content, 'localhost')
+
+    def test_parse_free_space_response(self):
+        content = read_file_content('./tests/responses/free_space_incorrect.xml')
+        result = Utils.parse_free_space_response(content, 'localhost')
+        self.assertEqual(result, '')
 
     def test_parse_info_response(self):
         content = read_file_content('./tests/responses/get_info.xml')
@@ -122,6 +142,12 @@ class ClientTestCase(TestCase):
         result = Utils.etree_to_string(tree)
         self.assertEqual(result, b'<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n<test/>')
 
+    def test_parse_is_dir_response_not_supported(self):
+        content = read_file_content('./tests/responses/is_dir_directory_not_supported.xml')
+        path = '/test_dir'
+        hostname = 'https://webdav.yandex.ru'
+        self.assertRaises(MethodNotSupported, Utils.parse_is_dir_response, content, path, hostname)
+
     def test_parse_is_dir_response_directory(self):
         content = read_file_content('./tests/responses/is_dir_directory.xml')
         path = '/test_dir'
@@ -140,6 +166,24 @@ class ClientTestCase(TestCase):
         file_names = listdir('.')
         self.assertGreater(len(file_names), 0)
         self.assertTrue('webdav3/' in file_names)
+
+    def test_extract_response_for_path_not_supported(self):
+        self.assertRaises(MethodNotSupported, Utils.extract_response_for_path, 'WrongXML', 'test', 'https://webdav.ru')
+
+    def test_extract_response_for_path_not_found(self):
+        content = read_file_content('./tests/responses/is_dir_directory.xml')
+        hostname = 'https://webdav.yandex.ru'
+        self.assertRaises(RemoteResourceNotFound, Utils.extract_response_for_path, content, 'wrong_name', hostname)
+
+    def test_parse_is_dir_response_file_with_prefix(self):
+        content = read_file_content('./tests/responses/is_dir_file.xml')
+        path = '/test.txt'
+        hostname = 'https://webdav.yandex.ru/test_dir/'
+        result = Utils.parse_is_dir_response(content, path, hostname)
+        self.assertFalse(result, 'It should be file')
+
+    def test_utils_created(self):
+        self.assertIsNotNone(Utils())
 
 
 if __name__ == '__main__':

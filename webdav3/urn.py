@@ -1,14 +1,8 @@
-try:
-    from urllib.parse import unquote, quote, urlsplit
-except ImportError:
-    from urllib import unquote, quote
-    from urlparse import urlsplit
-
 from re import sub
+from urllib.parse import unquote, quote, urlsplit
 
 
 class Urn(object):
-
     separate = "/"
 
     def __init__(self, path, directory=False):

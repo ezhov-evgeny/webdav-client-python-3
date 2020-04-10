@@ -7,6 +7,7 @@ import shutil
 import threading
 from io import BytesIO
 from re import sub
+from urllib.parse import unquote, urlsplit, urlparse
 
 import lxml.etree as etree
 import requests
@@ -15,12 +16,6 @@ from dateutil import parser as dateutil_parser
 from webdav3.connection import *
 from webdav3.exceptions import *
 from webdav3.urn import Urn
-
-try:
-    from urllib.parse import unquote, urlsplit, urlparse
-except ImportError:
-    from urllib import unquote
-    from urlparse import urlsplit, urlparse
 
 log = logging.getLogger(__name__)
 
