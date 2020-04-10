@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<d:multistatus xmlns:d="DAV:">
+    <d:response>
+        <d:href>/test_dir/</d:href>
+        <d:propstat>
+            <d:status>HTTP/1.1 200 OK</d:status>
+            <d:prop>
+                <d:creationdate>2018-05-10T07:31:13Z</d:creationdate>
+                <d:displayname>test_dir</d:displayname>
+                <d:getlastmodified>Thu, 10 May 2018 07:31:13 GMT</d:getlastmodified>
+            </d:prop>
+        </d:propstat>
+    </d:response>
+</d:multistatus>
