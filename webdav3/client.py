@@ -715,6 +715,8 @@ class Client(object):
         remote_resource_names = prune(paths, expression)
 
         for remote_resource_name in remote_resource_names:
+            if remote_resource_name == "":
+                continue
             local_path = os.path.join(local_directory, remote_resource_name)
             remote_path = "{remote_directory}{resource_name}".format(remote_directory=urn.path(), resource_name=remote_resource_name)
             remote_urn = Urn(remote_path)
