@@ -752,7 +752,7 @@ class Client(object):
             local_last_mod_date_unix_ts = int(os.stat(local_path).st_mtime)
 
             return remote_last_mod_date_unix_ts < local_last_mod_date_unix_ts
-        except ValueError or RuntimeWarning or KeyError:
+        except (ValueError, RuntimeWarning, KeyError):
             # If there is problem when parsing dates, or cannot get
             # last modified information, return None
             return None
@@ -841,11 +841,9 @@ class Resource(object):
     def unpublish(self):
         return self.client.unpublish(self.urn.path())
 
-    @property
     def property(self, option):
         return self.client.get_property(remote_path=self.urn.path(), option=option)
 
-    @property.setter
     def property(self, option, value):
         option['value'] = value.__str__()
         self.client.set_property(remote_path=self.urn.path(), option=option)
