@@ -122,16 +122,7 @@ class ClientTestCase(BaseClientTestCase):
             self.assertTrue(self.client.check(self.remote_path_dir), 'Expected the directory is created.')
             self.assertTrue(self.client.check(self.remote_path_file), 'Expected the file is uploaded.')
 
-        self.client.upload(remote_path=self.remote_path_file, local_path=self.local_path_dir)
-
-    def test_upload_async(self):
-        self._prepare_for_uploading()
-
-        def callback():
-            self.assertTrue(self.client.check(self.remote_path_dir), 'Expected the directory is created.')
-            self.assertTrue(self.client.check(self.remote_path_file), 'Expected the file is uploaded.')
-
-        self.client.upload(remote_path=self.remote_path_file, local_path=self.local_path_dir)
+        self.client.upload_sync(remote_path=self.remote_path_file, local_path=self.local_path_dir, callback=callback)
 
     def test_copy(self):
         self._prepare_for_downloading()
