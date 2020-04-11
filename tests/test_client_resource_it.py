@@ -1,4 +1,7 @@
+import io
 import unittest
+from os import path
+from os.path import sep
 
 from tests.base_client_it import BaseClientTestCase
 from webdav3.client import Resource
@@ -69,6 +72,21 @@ class ResourceTestCase(BaseClientTestCase):
         self._prepare_for_downloading()
         resource = Resource(self.client, Urn(self.remote_path_file))
         self.assertTrue(resource.check())
+
+    def test_read_from_and_write_to(self):
+        self._prepare_for_downloading()
+        resource = Resource(self.client, Urn(self.remote_path_file))
+        resource.read_from('string')
+        buff = io.BytesIO(b'')
+        resource.write_to(buff)
+        self.assertEqual(buff.getvalue().decode(), 'string')
+
+    def test_read_and_write(self):
+        self._prepare_for_uploading()
+        resource = Resource(self.client, Urn(self.remote_path_file))
+        resource.read(self.local_file_path)
+        resource.write(self.local_path_dir + sep + 'test2.txt')
+        self.assertTrue(path.exists(self.local_path_dir + sep + 'test2.txt'))
 
 
 if __name__ == '__main__':

@@ -836,10 +836,10 @@ class Resource(object):
     def unpublish(self):
         return self.client.unpublish(self.urn.path())
 
-    def property(self, option):
+    def get_property(self, option):
         return self.client.get_property(remote_path=self.urn.path(), option=option)
 
-    def property(self, option, value):
+    def set_property(self, option, value):
         option['value'] = value.__str__()
         self.client.set_property(remote_path=self.urn.path(), option=option)
 
