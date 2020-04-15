@@ -581,7 +581,8 @@ class Client(object):
                  `created`: date of resource creation,
                  `name`: name of resource,
                  `size`: size of resource,
-                 `modified`: date of resource modification.
+                 `modified`: date of resource modification,
+                 `etag`: etag of resource.
         """
         urn = Urn(remote_path)
         self._check_remote_resource(remote_path, urn)
@@ -913,14 +914,16 @@ class WebDavXmlUtils:
                  `created`: date of resource creation,
                  `name`: name of resource,
                  `size`: size of resource,
-                 `modified`: date of resource modification.
+                 `modified`: date of resource modification,
+                 `etag`: etag of resource.
         """
         response = WebDavXmlUtils.extract_response_for_path(content=content, path=path, hostname=hostname)
         find_attributes = {
             'created': ".//{DAV:}creationdate",
             'name': ".//{DAV:}displayname",
             'size': ".//{DAV:}getcontentlength",
-            'modified': ".//{DAV:}getlastmodified"
+            'modified': ".//{DAV:}getlastmodified",
+            'etag': ".//{DAV:}getetag",
         }
         info = dict()
         for (name, value) in find_attributes.items():
