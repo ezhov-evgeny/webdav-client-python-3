@@ -1,5 +1,8 @@
 Release Notes
 -------------
+**Version 3.14.3**
+ * Added the etag property in the get info method by https://github.com/huangganggui
+
 **Version 3.14.2**
  * Use a content type for determining is the resource a directory or not in the `list` method
  * Fixed the issue with duplicated path segments in `download_sync` and `pull` methods by https://github.com/jotbe
