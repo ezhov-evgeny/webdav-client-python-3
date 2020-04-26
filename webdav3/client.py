@@ -234,18 +234,22 @@ class Client(object):
         return True if self.webdav.valid() else False
 
     @wrap_connection_error
-    def list(self, remote_path=root):
+    def list(self, remote_path=root, getinfo = False):
         """Returns list of nested files and directories for remote WebDAV directory by path.
         More information you can find by link http://webdav.org/specs/rfc4918.html#METHOD_PROPFIND
 
         :param remote_path: path to remote directory.
-        :return: list of nested file or directory names.
+        :param getinfo: path and element info to remote directory, like cmd 'ls -l'.
+        :return: list of nested file or directory names and info.
         """
         directory_urn = Urn(remote_path, directory=True)
         if directory_urn.path() != Client.root and not self.check(directory_urn.path()):
             raise RemoteResourceNotFound(directory_urn.path())
 
         response = self.execute_request(action='list', path=directory_urn.quote())
+        if getinfo:
+            return WebDavXmlUtils.parse_get_list_info_response(response.content)
+
         urns = WebDavXmlUtils.parse_get_list_response(response.content)
 
         path = Urn.normalize_path(self.get_full_path(directory_urn))
@@ -848,6 +852,38 @@ class Resource(object):
 class WebDavXmlUtils:
     def __init__(self):
         pass
+
+    @staticmethod
+    def parse_get_list_info_response(content):
+        """Parses of response content XML from WebDAV server and extract file and directory infos
+
+        :param content: the XML content of HTTP response from WebDAV server for getting list of files by remote path.
+        :return: list of extracted file or directory infos.
+        """
+        try:
+            tree = etree.fromstring(content)
+            infos = []
+            for response in tree.findall(".//{DAV:}response"):
+                href_el = next(iter(response.findall(".//{DAV:}href")), None)
+                if href_el is None:
+                    continue
+
+                info = dict()
+                is_dir = len(response.findall(".//{DAV:}collection")) > 0
+                find_attributes = {
+                    'created': ".//{DAV:}creationdate",
+                    'name': ".//{DAV:}displayname",
+                    'size': ".//{DAV:}getcontentlength",
+                    'modified': ".//{DAV:}getlastmodified",
+                    'etag': ".//{DAV:}getetag",
+                }
+                for (name, value) in find_attributes.items():
+                    info[name] = response.findtext(value)
+                info['isdir'] = is_dir
+                infos.append(info)
+            return infos
+        except etree.XMLSyntaxError:
+            return list()
 
     @staticmethod
     def parse_get_list_response(content):
