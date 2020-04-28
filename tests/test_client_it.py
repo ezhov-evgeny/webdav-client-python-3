@@ -18,6 +18,12 @@ class ClientTestCase(BaseClientTestCase):
         self.assertIsNotNone(file_list, 'List of files should not be None')
         self.assertGreater(file_list.__len__(), 0, 'Expected that amount of files more then 0')
 
+    def test_list_no_parent(self):
+        self._prepare_for_downloading(inner_dir=True)
+        file_list = self.client.list(self.remote_path_dir)
+        for file_name in file_list:
+            self.assertNotEqual(self.remote_path_dir, file_name, 'Result should not contain parent directory')
+
     def test_free(self):
         if 'localhost' in self.options['webdav_hostname']:
             with self.assertRaises(MethodNotSupported):
