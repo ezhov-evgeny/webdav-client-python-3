@@ -235,7 +235,7 @@ class Client(object):
         return True if self.webdav.valid() else False
 
     @wrap_connection_error
-    def list(self, remote_path=root, getinfo = False):
+    def list(self, remote_path=root, get_info=False):
         """Returns list of nested files and directories for remote WebDAV directory by path.
         More information you can find by link http://webdav.org/specs/rfc4918.html#METHOD_PROPFIND
 
@@ -247,13 +247,14 @@ class Client(object):
         if directory_urn.path() != Client.root and not self.check(directory_urn.path()):
             raise RemoteResourceNotFound(directory_urn.path())
 
+        path = Urn.normalize_path(self.get_full_path(directory_urn))
         response = self.execute_request(action='list', path=directory_urn.quote())
-        if getinfo:
-            return WebDavXmlUtils.parse_get_list_info_response(response.content)
+        if get_info:
+            subfiles = WebDavXmlUtils.parse_get_list_info_response(response.content)
+            return [subfile for subfile in subfiles if Urn.compare_path(path, subfile.get('path')) is False]
 
         urns = WebDavXmlUtils.parse_get_list_response(response.content)
 
-        path = Urn.normalize_path(self.get_full_path(directory_urn))
         return [urn.filename() for urn in urns if Urn.compare_path(path, urn.path()) is False]
 
     @wrap_connection_error
@@ -867,7 +868,7 @@ class WebDavXmlUtils:
                 href_el = next(iter(response.findall(".//{DAV:}href")), None)
                 if href_el is None:
                     continue
-
+                path = unquote(urlsplit(href_el.text).path)
                 info = dict()
                 is_dir = len(response.findall(".//{DAV:}collection")) > 0
                 find_attributes = {
@@ -880,6 +881,7 @@ class WebDavXmlUtils:
                 for (name, value) in find_attributes.items():
                     info[name] = response.findtext(value)
                 info['isdir'] = is_dir
+                info['path'] = path
                 infos.append(info)
             return infos
         except etree.XMLSyntaxError:
