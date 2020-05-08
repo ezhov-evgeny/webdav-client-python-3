@@ -8,6 +8,7 @@ from webdav3.client import Client
 
 class BaseClientTestCase(unittest.TestCase):
     remote_path_file = 'test_dir/test.txt'
+    remote_compressed_path_file = 'test_dir/compressed.txt'
     remote_path_file2 = 'test_dir2/test.txt'
     remote_inner_path_file = 'test_dir/inner/test.txt'
     remote_path_dir = 'test_dir'
@@ -17,6 +18,7 @@ class BaseClientTestCase(unittest.TestCase):
     local_base_dir = 'tests/'
     local_file = 'test.txt'
     local_file_path = local_base_dir + 'test.txt'
+    local_compressed_file_path = local_base_dir + 'compressed.txt'
     local_path_dir = local_base_dir + 'res/test_dir'
 
     options = {

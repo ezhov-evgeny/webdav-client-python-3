@@ -7,6 +7,7 @@ from tests.test_client_it import ClientTestCase
 class MultiClientTestCase(ClientTestCase):
     remote_path_file = 'директория/тестовый.txt'
     remote_path_file2 = 'директория/тестовый2.txt'
+    remote_compressed_path_file = 'директория/сжатый.txt'
     remote_inner_path_file = 'директория/вложенная/тестовый.txt'
     remote_path_dir = 'директория'
     remote_path_dir2 = 'директория2'
