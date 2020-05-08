@@ -17,7 +17,7 @@ python:
 
 before_install:
   - docker pull bytemark/webdav
-  - docker run -d --name webdav -e AUTH_TYPE=Basic -e USERNAME=alice -e PASSWORD=secret1234 -v conf:/usr/local/apache2/conf -p 8585:80 bytemark/webdav
+  - docker run -d --name webdav -e AUTH_TYPE=Basic -e USERNAME=alice -e PASSWORD=secret1234 -v $(pwd)/conf:/usr/local/apache2/conf -p 8585:80 bytemark/webdav
   - docker ps -a
 
 install:
