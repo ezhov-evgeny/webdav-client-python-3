@@ -46,6 +46,12 @@ class ClientTestCase(BaseClientTestCase):
         self.client.download_from(buff=buff, remote_path=self.remote_path_file)
         self.assertEqual(buff.getvalue(), b'test content for testing of webdav client')
 
+    def test_download_from_compressed(self):
+        self._prepare_dir_for_downloading(self.remote_path_dir, self.remote_compressed_path_file, local_file_path=self.local_compressed_file_path)
+        buff = BytesIO()
+        self.client.download_from(buff=buff, remote_path=self.remote_compressed_path_file)
+        self.assertIn(b'test content for testing of webdav client', buff.getvalue())
+
     def test_download_from_dir(self):
         self._prepare_for_downloading()
         buff = BytesIO()

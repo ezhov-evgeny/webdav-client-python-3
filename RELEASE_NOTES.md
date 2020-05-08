@@ -1,5 +1,8 @@
 Release Notes
 -------------
+**Version 3.14.4**
+ * Fixed the issue with gzipped content on `download_from`
+ 
 **Version 3.14.3**
  * Added the etag property in the get info method by https://github.com/huangganggui
 
