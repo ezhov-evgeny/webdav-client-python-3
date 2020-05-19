@@ -1,9 +1,20 @@
+import logging
 import os
 import shutil
+import sys
 import unittest
 from os import path
 
 from webdav3.client import Client
+
+root = logging.getLogger()
+root.setLevel(logging.DEBUG)
+
+log_handler = logging.StreamHandler(sys.stdout)
+log_handler.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+log_handler.setFormatter(formatter)
+root.addHandler(log_handler)
 
 
 class BaseClientTestCase(unittest.TestCase):
@@ -29,6 +40,15 @@ class BaseClientTestCase(unittest.TestCase):
             'check': 'GET'
         }
     }
+
+    # options = {
+    #     'webdav_hostname': 'https://demo1.nextcloud.com/remote.php/dav/files/RCw8Y9XXFnzkLJbN/',
+    #     'webdav_login': 'RCw8Y9XXFnzkLJbN',
+    #     'webdav_password': 'demo',
+    #     'webdav_override_methods': {
+    #         'check': 'GET'
+    #     }
+    # }
 
     # options = {
     #     'webdav_hostname': 'https://webdav.yandex.ru',
