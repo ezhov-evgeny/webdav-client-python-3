@@ -6,6 +6,7 @@ from os import path
 from time import sleep
 
 from tests.base_client_it import BaseClientTestCase
+from webdav3.client import Client
 from webdav3.exceptions import MethodNotSupported, OptionNotValid, RemoteResourceNotFound
 
 
@@ -29,16 +30,42 @@ class ClientTestCase(BaseClientTestCase):
             with self.assertRaises(MethodNotSupported):
                 self.client.free()
         else:
-            self.assertGreater(self.client.free(), 0, 'Expected that free space on WebDAV server is more then 0 bytes')
+            self.assertNotEqual(self.client.free(), 0, 'Expected that free space on WebDAV server is more then 0 bytes')
 
     def test_check(self):
+        self._prepare_for_downloading(inner_dir=True)
         self.assertTrue(self.client.check(), 'Expected that root directory is exist')
+        self.assertTrue(self.client.check(self.remote_path_dir), 'Expected that the directory is exist')
+        self.assertTrue(self.client.check(self.remote_inner_path_dir), 'Expected that the inner directory is exist')
+        self.assertTrue(self.client.check(self.remote_path_file), 'Expected that the file is exist')
+        self.assertTrue(self.client.check(self.remote_inner_path_file), 'Expected that the inner file is exist')
+
+    def test_check_does_not_exist(self):
+        self._prepare_for_downloading(inner_dir=True)
+        self.assertFalse(self.client.check('wrong'), 'Expected that the directory is not exist')
+        self.assertFalse(self.client.check(self.remote_path_dir + '/wrong'), 'Expected that the inner directory is not exist')
+        self.assertFalse(self.client.check(self.remote_path_dir + '/wrong.txt'), 'Expected that the file is not exist')
+        self.assertFalse(self.client.check(self.remote_inner_path_dir + '/wrong.txt'), 'Expected that the inner file is not exist')
+
+    def test_check_another_client(self):
+        self._prepare_for_uploading()
+        client = Client(self.options)
+        if self.client.check(self.remote_path_dir):
+            self.client.clean(self.remote_path_dir)
+        self.assertTrue(self.client.mkdir(self.remote_path_dir))
+        self.assertTrue(self.client.check(self.remote_path_dir))
+
+        self.client.upload_sync(remote_path=self.remote_path_file, local_path=self.local_path_dir)
+        self.assertTrue(self.client.check(self.remote_path_file))
+
+        self.assertTrue(client.check(self.remote_path_dir))
+        self.assertTrue(client.check(self.remote_path_file))
 
     def test_mkdir(self):
-        if self.client.check(remote_path=self.remote_path_dir):
-            self.client.clean(remote_path=self.remote_path_dir)
-        self.client.mkdir(remote_path=self.remote_path_dir)
-        self.assertTrue(self.client.check(remote_path=self.remote_path_dir), 'Expected the directory is created.')
+        if self.client.check(self.remote_path_dir):
+            self.client.clean(self.remote_path_dir)
+        self.client.mkdir(self.remote_path_dir)
+        self.assertTrue(self.client.check(self.remote_path_dir), 'Expected the directory is created.')
 
     def test_download_from(self):
         self._prepare_for_downloading()
@@ -67,7 +94,7 @@ class ClientTestCase(BaseClientTestCase):
     def test_download_directory_wrong(self):
         self._prepare_for_downloading()
         with self.assertRaises(RemoteResourceNotFound):
-            self.client.download_directory(remote_path=self.remote_path_file, local_path=self.local_path_dir)
+            self.client.download_directory(remote_path='wrong', local_path=self.local_path_dir)
 
     def test_download(self):
         self._prepare_for_downloading()
@@ -178,33 +205,33 @@ class ClientTestCase(BaseClientTestCase):
     def test_set_property(self):
         self._prepare_for_downloading()
         self.client.set_property(remote_path=self.remote_path_file, option={
-            'namespace': 'test',
+            'namespace': 'http://test.com/ns',
             'name': 'aProperty',
             'value': 'aValue'
         })
         result = self.client.get_property(remote_path=self.remote_path_file,
-                                          option={'namespace': 'test', 'name': 'aProperty'})
+                                          option={'namespace': 'http://test.com/ns', 'name': 'aProperty'})
         self.assertEqual(result, 'aValue', 'Property value should be set')
 
     def test_set_property_batch(self):
         self._prepare_for_downloading()
         self.client.set_property_batch(remote_path=self.remote_path_file, option=[
             {
-                'namespace': 'test',
+                'namespace': 'http://test.com/ns',
                 'name': 'aProperty',
                 'value': 'aValue'
             },
             {
-                'namespace': 'test',
+                'namespace': 'http://test.com/ns',
                 'name': 'aProperty2',
                 'value': 'aValue2'
             }
         ])
         result = self.client.get_property(remote_path=self.remote_path_file,
-                                          option={'namespace': 'test', 'name': 'aProperty'})
+                                          option={'namespace': 'http://test.com/ns', 'name': 'aProperty'})
         self.assertEqual(result, 'aValue', 'First property value should be set')
         result = self.client.get_property(remote_path=self.remote_path_file,
-                                          option={'namespace': 'test', 'name': 'aProperty2'})
+                                          option={'namespace': 'http://test.com/ns', 'name': 'aProperty2'})
         self.assertEqual(result, 'aValue2', 'Second property value should be set')
 
     def test_pull(self):
