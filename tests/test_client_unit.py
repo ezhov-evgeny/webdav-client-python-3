@@ -64,6 +64,15 @@ class ClientTestCase(TestCase):
         self.assertEqual(result['name'], 'test.txt')
         self.assertEqual(result['modified'], 'Wed, 18 Oct 2017 15:16:04 GMT')
         self.assertEqual(result['size'], '41')
+    
+    def test_get_info_from_response(self):
+        content = read_file_content('./tests/responses/get_info.xml')
+        response = Utils.extract_response_for_path(content, '/test_dir/test.txt', 'localhost')
+        result = Utils.get_info_from_response(response)
+        self.assertEqual(result['created'], '2017-10-18T15:16:04Z')
+        self.assertEqual(result['name'], 'test.txt')
+        self.assertEqual(result['modified'], 'Wed, 18 Oct 2017 15:16:04 GMT')
+        self.assertEqual(result['size'], '41')
 
     def test_create_get_property_request_content(self):
         option = {
