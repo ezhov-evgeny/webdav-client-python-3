@@ -21,6 +21,18 @@ class ClientTestCase(TestCase):
         self.assertFalse(result[1].is_dir(), '{} should be marked as file'.format(result[1].path()))
         self.assertEqual(result[1].__str__(), '/test_dir/test.txt')
 
+    def test_parse_get_list_info_response(self):
+        content = read_file_content('./tests/responses/get_list_info.xml')
+        result = Utils.parse_get_list_info_response(content)
+        print(result)
+        self.assertEqual(result[0]['created'], '2017-10-18T15:16:04Z')
+        self.assertEqual(result[0]['name'], 'test.txt')
+        self.assertEqual(result[0]['modified'], 'Wed, 18 Oct 2017 15:16:04 GMT')
+        self.assertEqual(result[0]['size'], '41')
+        self.assertEqual(result[0]['etag'], 'ab0b4b7973803c03639b848682b5f38c')
+        self.assertEqual(result[0]['isdir'], False)
+        self.assertEqual(result[0]['path'], '/test_dir/test.txt')
+
     def test_parse_get_list_response_empty(self):
         content = read_file_content('./tests/responses/get_list_empty.xml')
         result = Utils.parse_get_list_response(content)
