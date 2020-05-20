@@ -64,7 +64,7 @@ class ClientTestCase(TestCase):
         content = read_file_content('./tests/responses/free_space_not_supported.xml')
         self.assertRaises(MethodNotSupported, Utils.parse_free_space_response, content, 'localhost')
 
-    def test_parse_free_space_response(self):
+    def test_parse_free_space_response_incorrect(self):
         content = read_file_content('./tests/responses/free_space_incorrect.xml')
         result = Utils.parse_free_space_response(content, 'localhost')
         self.assertEqual(result, '')
