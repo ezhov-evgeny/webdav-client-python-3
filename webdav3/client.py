@@ -247,7 +247,9 @@ class Client(object):
                  `name`: name of resource,
                  `size`: size of resource,
                  `modified`: date of resource modification,
-                 `etag`: etag of resource.
+                 `etag`: etag of resource,
+                 `isdir`: type of resource,
+                 `path`: path of resource.
                  
         """
         directory_urn = Urn(remote_path, directory=True)
@@ -871,8 +873,9 @@ class WebDavXmlUtils:
                  `name`: name of resource,
                  `size`: size of resource,
                  `modified`: date of resource modification,
-                 `etag`: etag of resource.
-        
+                 `etag`: etag of resource,
+                 `isdir`: type of resource,
+                 `path`: path of resource.
         """
         try:
             tree = etree.fromstring(content)
@@ -884,15 +887,7 @@ class WebDavXmlUtils:
                 path = unquote(urlsplit(href_el.text).path)
                 info = dict()
                 is_dir = len(response.findall(".//{DAV:}collection")) > 0
-                find_attributes = {
-                    'created': ".//{DAV:}creationdate",
-                    'name': ".//{DAV:}displayname",
-                    'size': ".//{DAV:}getcontentlength",
-                    'modified': ".//{DAV:}getlastmodified",
-                    'etag': ".//{DAV:}getetag",
-                }
-                for (name, value) in find_attributes.items():
-                    info[name] = response.findtext(value)
+                info = WebDavXmlUtils.get_info_from_response(response)
                 info['isdir'] = is_dir
                 info['path'] = path
                 infos.append(info)
@@ -955,6 +950,30 @@ class WebDavXmlUtils:
             return str()
 
     @staticmethod
+    def get_info_from_response(response):
+        """ Get information attributes from response
+
+        :param response: XML object of response for the remote resource defined by path
+        :return: a dictionary of information attributes and them values with following keys:
+                 `created`: date of resource creation,
+                 `name`: name of resource,
+                 `size`: size of resource,
+                 `modified`: date of resource modification,
+                 `etag`: etag of resource
+        """
+        find_attributes = {
+            'created': ".//{DAV:}creationdate",
+            'name': ".//{DAV:}displayname",
+            'size': ".//{DAV:}getcontentlength",
+            'modified': ".//{DAV:}getlastmodified",
+            'etag': ".//{DAV:}getetag",
+        }
+        info = dict()
+        for (name, value) in find_attributes.items():
+            info[name] = response.findtext(value)
+        return info
+
+    @staticmethod
     def parse_info_response(content, path, hostname):
         """Parses of response content XML from WebDAV server and extract an information about resource.
 
@@ -969,17 +988,7 @@ class WebDavXmlUtils:
                  `etag`: etag of resource.
         """
         response = WebDavXmlUtils.extract_response_for_path(content=content, path=path, hostname=hostname)
-        find_attributes = {
-            'created': ".//{DAV:}creationdate",
-            'name': ".//{DAV:}displayname",
-            'size': ".//{DAV:}getcontentlength",
-            'modified': ".//{DAV:}getlastmodified",
-            'etag': ".//{DAV:}getetag",
-        }
-        info = dict()
-        for (name, value) in find_attributes.items():
-            info[name] = response.findtext(value)
-        return info
+        return WebDavXmlUtils.get_info_from_response(response)
 
     @staticmethod
     def parse_is_dir_response(content, path, hostname):
