@@ -28,6 +28,18 @@ class ClientTestCase(BaseClientTestCase):
         for file_name in file_list:
             self.assertNotEqual(self.remote_path_dir, file_name, 'Result should not contain parent directory')
 
+    def test_list_info(self):
+        self._prepare_for_downloading()
+        list_info = self.client.list(get_info=True)
+        self.assertIsNotNone(list_info, 'List of files should not be None')
+        self.assertTrue('created' in list_info[0].keys(), 'info should contain created')
+        self.assertTrue('name' in list_info[0].keys(), 'info should contain name')
+        self.assertTrue('modified' in list_info[0].keys(), 'info should contain modified')
+        self.assertTrue('size' in list_info[0].keys(), 'info should contain size')
+        self.assertTrue('etag' in list_info[0].keys(), 'info should contain etag')
+        self.assertTrue('isdir' in list_info[0].keys(), 'info should contain isdir')
+        self.assertTrue('path' in list_info[0].keys(), 'info should contain path')
+
     def test_free(self):
         if 'localhost' in self.options['webdav_hostname']:
             with self.assertRaises(MethodNotSupported):
