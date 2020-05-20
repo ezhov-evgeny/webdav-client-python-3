@@ -239,8 +239,15 @@ class Client(object):
         More information you can find by link http://webdav.org/specs/rfc4918.html#METHOD_PROPFIND
 
         :param remote_path: path to remote directory.
-        :param getinfo: path and element info to remote directory, like cmd 'ls -l'.
-        :return: list of nested file or directory names and info.
+        :param get_info: path and element info to remote directory, like cmd 'ls -l'.
+        :return: if get_info=False it returns list of nested file or directory names, otherwise it returns
+                 list of information, the information is a dictionary and it values with following keys:
+                 `created`: date of resource creation,
+                 `name`: name of resource,
+                 `size`: size of resource,
+                 `modified`: date of resource modification,
+                 `etag`: etag of resource.
+                 
         """
         directory_urn = Urn(remote_path, directory=True)
         if directory_urn.path() != Client.root and not self.check(directory_urn.path()):
@@ -859,7 +866,13 @@ class WebDavXmlUtils:
         """Parses of response content XML from WebDAV server and extract file and directory infos
 
         :param content: the XML content of HTTP response from WebDAV server for getting list of files by remote path.
-        :return: list of extracted file or directory infos.
+        :return: list of information, the information is a dictionary and it values with following keys:
+                 `created`: date of resource creation,
+                 `name`: name of resource,
+                 `size`: size of resource,
+                 `modified`: date of resource modification,
+                 `etag`: etag of resource.
+        
         """
         try:
             tree = etree.fromstring(content)
