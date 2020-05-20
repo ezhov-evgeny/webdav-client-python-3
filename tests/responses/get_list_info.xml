@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<d:multistatus xmlns:d="DAV:">
+    <d:response>
+        <d:href>/test_dir/test.txt</d:href>
+        <d:propstat>
+            <d:status>HTTP/1.1 200 OK</d:status>
+            <d:prop>
+                <d:resourcetype/>
+                <d:getlastmodified>Wed, 18 Oct 2017 15:16:04 GMT</d:getlastmodified>
+                <d:getetag>ab0b4b7973803c03639b848682b5f38c</d:getetag>
+                <d:getcontenttype>text/plain</d:getcontenttype>
+                <d:getcontentlength>41</d:getcontentlength>
+                <d:displayname>test.txt</d:displayname>
+                <d:creationdate>2017-10-18T15:16:04Z</d:creationdate>
+            </d:prop>
+        </d:propstat>
+    </d:response>
+</d:multistatus>
