@@ -79,9 +79,6 @@ class Client(object):
     # path to root directory of WebDAV
     root = '/'
 
-    # request timeout in seconds
-    timeout = 30
-
     # controls whether to verify the server's TLS certificate or not
     verify = True
 
@@ -151,6 +148,7 @@ class Client(object):
         self.webdav = WebDAVSettings(webdav_options)
         self.requests.update(self.webdav.override_methods)
         self.default_options = {}
+        self.timeout = self.webdav.timeout
 
     def get_headers(self, action, headers_ext=None):
         """Returns HTTP headers of specified WebDAV actions.
@@ -205,7 +203,7 @@ class Client(object):
         :return: HTTP response of request.
         """
         if self.session.auth:
-            self.session.request(method="GET", url=self.webdav.hostname, verify=self.verify)  # (Re)Authenticates against the proxy
+            self.session.request(method="GET", url=self.webdav.hostname, verify=self.verify, timeout=self.timeout)  # (Re)Authenticates against the proxy
         response = self.session.request(
             method=self.requests[action],
             url=self.get_url(path),

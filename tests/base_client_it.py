@@ -36,6 +36,7 @@ class BaseClientTestCase(unittest.TestCase):
         'webdav_hostname': 'http://localhost:8585',
         'webdav_login': 'alice',
         'webdav_password': 'secret1234',
+        'webdav_timeout': 10,
         'webdav_override_methods': {
             'check': 'GET'
         }

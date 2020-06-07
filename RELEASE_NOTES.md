@@ -1,5 +1,8 @@
 Release Notes
 -------------
+**Version 3.14.5**
+ * Ability to configure a requests timeout
+ 
 **Version 3.14.4**
  * Fixed the issue with gzipped content on `download_from`
  

@@ -13,6 +13,9 @@ class TailingSlashClientTestCase(ClientTestCase):
         }
     }
 
+    def test_timeout_set(self):
+        self.assertEqual(30, self.client.timeout)
+
     def test_list_inner(self):
         self._prepare_for_downloading(True)
         file_list = self.client.list(self.remote_inner_path_dir)

@@ -13,6 +13,9 @@ from webdav3.exceptions import MethodNotSupported, OptionNotValid, RemoteResourc
 class ClientTestCase(BaseClientTestCase):
     pulled_file = BaseClientTestCase.local_path_dir + os.sep + BaseClientTestCase.local_file
 
+    def test_timeout_set(self):
+        self.assertEqual(10, self.client.timeout)
+
     def test_list(self):
         self._prepare_for_downloading()
         file_list = self.client.list()
