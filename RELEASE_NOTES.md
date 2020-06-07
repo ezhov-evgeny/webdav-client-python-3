@@ -1,7 +1,8 @@
 Release Notes
 -------------
 **Version 3.14.5**
- * Ability to configure a requests timeout
+ * An ability to configure a requests timeout
+ * An ability to get a `list` method result with detailed information by https://github.com/huangganggui
  
 **Version 3.14.4**
  * Fixed the issue with gzipped content on `download_from`

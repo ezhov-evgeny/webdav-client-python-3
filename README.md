@@ -168,6 +168,7 @@ free_size = client.free()
 
 files1 = client.list()
 files2 = client.list("dir1")
+files3 = client.list("dir1", get_info=True) # returns a list of dictionaries with files details
 ```
 
 ```python
