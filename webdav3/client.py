@@ -13,8 +13,9 @@ import lxml.etree as etree
 import requests
 from dateutil import parser as dateutil_parser
 
-from webdav3.connection import *
-from webdav3.exceptions import *
+from webdav3.connection import WebDAVSettings
+from webdav3.exceptions import NoConnection, ConnectionException, NotEnoughSpace, RemoteResourceNotFound, MethodNotSupported, ResponseErrorCode, \
+    RemoteParentNotFound, OptionNotValid, LocalResourceNotFound
 from webdav3.urn import Urn
 
 log = logging.getLogger(__name__)
