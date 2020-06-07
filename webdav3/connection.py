@@ -25,7 +25,7 @@ class WebDAVSettings(ConnectionSettings):
     ns = "webdav:"
     prefix = "webdav_"
     keys = {'hostname', 'login', 'password', 'token', 'root', 'cert_path', 'key_path', 'recv_speed', 'send_speed',
-            'verbose', 'disable_check', 'override_methods'}
+            'verbose', 'disable_check', 'override_methods', 'timeout'}
 
     def __init__(self, options):
         self.hostname = None
@@ -40,13 +40,15 @@ class WebDAVSettings(ConnectionSettings):
         self.verbose = None
         self.disable_check = False
         self.override_methods = {}
+        self.timeout = 30
 
         self.options = dict()
 
         for key in self.keys:
             value = options.get(key, '')
-            self.options[key] = value
-            self.__dict__[key] = value
+            if not (self.__dict__[key] and not value):
+                self.options[key] = value
+                self.__dict__[key] = value
 
         self.root = Urn(self.root).quote() if self.root else ''
         self.root = self.root.rstrip(Urn.separate)

@@ -16,6 +16,27 @@ class ConnectionTestCase(unittest.TestCase):
         self.assertTrue(settings.is_valid())
         self.assertTrue(settings.valid())
 
+    def test_connection_settings_timeout_set(self):
+        options = {
+            'webdav_hostname': 'http://localhost:8585',
+            'webdav_login': 'alice',
+            'webdav_password': 'secret1234',
+            'timeout': 60
+        }
+        webdav_options = get_options(option_type=WebDAVSettings, from_options=options)
+        settings = WebDAVSettings(webdav_options)
+        self.assertEqual(60, settings.timeout)
+
+    def test_connection_settings_timeout_default(self):
+        options = {
+            'webdav_hostname': 'http://localhost:8585',
+            'webdav_login': 'alice',
+            'webdav_password': 'secret1234'
+        }
+        webdav_options = get_options(option_type=WebDAVSettings, from_options=options)
+        settings = WebDAVSettings(webdav_options)
+        self.assertEqual(30, settings.timeout)
+
     def test_connection_settings_no_hostname(self):
         options = {
             'webdav_login': 'alice',

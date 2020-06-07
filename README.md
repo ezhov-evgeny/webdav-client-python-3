@@ -70,6 +70,20 @@ options = {
 client = Client(options)
 ```
 
+For configuring a requests timeout you can use an option `webdav_timeout` with int value in seconds, by default the timeout is set to 30 seconds.
+
+```python
+from webdav3.client import Client
+
+options = {
+ 'webdav_hostname': "https://webdav.server.ru",
+ 'webdav_login':    "login",
+ 'webdav_password': "password",
+ 'webdav_timeout': 30
+}
+client = Client(options)
+```
+
 When a proxy server you need to specify settings to connect through it.
 
 ```python
