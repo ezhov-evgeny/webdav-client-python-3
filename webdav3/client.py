@@ -334,7 +334,7 @@ class Client(object):
             raise RemoteResourceNotFound(urn.path())
 
         response = self.execute_request(action='download', path=urn.quote())
-        for chunk in response.iter_content(chunk_size=128):
+        for chunk in response.iter_content(chunk_size=self.webdav.chunk_size):
             buff.write(chunk)
 
     def download(self, remote_path, local_path, progress=None):
@@ -396,7 +396,7 @@ class Client(object):
 
         with open(local_path, 'wb') as local_file:
             response = self.execute_request('download', urn.quote())
-            for block in response.iter_content(1024):
+            for block in response.iter_content(chunk_size=self.webdav.chunk_size):
                 local_file.write(block)
 
     def download_sync(self, remote_path, local_path, callback=None):
