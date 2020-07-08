@@ -25,12 +25,15 @@ class BaseClientTestCase(unittest.TestCase):
     remote_path_dir = 'test_dir'
     remote_path_dir2 = 'test_dir2'
     remote_inner_path_dir = 'test_dir/inner'
+    remote_zip_file = 'test.tar.gz'
     inner_dir_name = 'inner'
     local_base_dir = 'tests/'
     local_file = 'test.txt'
     local_file_path = local_base_dir + 'test.txt'
     local_compressed_file_path = local_base_dir + 'compressed.txt'
     local_path_dir = local_base_dir + 'res/test_dir'
+    local_zip_file = local_base_dir + 'test.tar.gz'
+    local_downloaded_zip_file = local_base_dir + 'downloaded.tar.gz'
 
     options = {
         'webdav_hostname': 'http://localhost:8585',

@@ -100,6 +100,17 @@ class ClientTestCase(BaseClientTestCase):
         with self.assertRaises(OptionNotValid):
             self.client.download_from(buff=buff, remote_path=self.remote_path_dir)
 
+    def test_download_zip_file_without_extract(self):
+        self.client.upload_file(self.remote_zip_file, self.local_zip_file)
+        self.client.download_file(self.remote_zip_file, self.local_downloaded_zip_file)
+        with open(self.local_zip_file, mode='rb') as f:
+            expected_content = f.read()
+        with open(self.local_downloaded_zip_file, mode='rb') as f:
+            actual_content = f.read()
+            print(actual_content)
+        os.remove(self.local_downloaded_zip_file)
+        self.assertEqual(expected_content, actual_content)
+
     def test_download_from_wrong_file(self):
         self._prepare_for_downloading()
         buff = BytesIO()
