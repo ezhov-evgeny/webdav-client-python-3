@@ -234,12 +234,13 @@ class Client(object):
         return True if self.webdav.valid() else False
 
     @wrap_connection_error
-    def list(self, remote_path=root, get_info=False):
+    def list(self, remote_path=root, get_info=False, recursive=True):
         """Returns list of nested files and directories for remote WebDAV directory by path.
         More information you can find by link http://webdav.org/specs/rfc4918.html#METHOD_PROPFIND
 
         :param remote_path: path to remote directory.
         :param get_info: path and element info to remote directory, like cmd 'ls -l'.
+        :param recursive: true will do a recursive listing of infinite depth
         :return: if get_info=False it returns list of nested file or directory names, otherwise it returns
                  list of information, the information is a dictionary and it values with following keys:
                  `created`: date of resource creation,
@@ -251,12 +252,15 @@ class Client(object):
                  `path`: path of resource.
                  
         """
+        headers = []
+        if recursive == True:
+            headers = ["Depth:infinity"]
         directory_urn = Urn(remote_path, directory=True)
         if directory_urn.path() != Client.root and not self.check(directory_urn.path()):
             raise RemoteResourceNotFound(directory_urn.path())
 
         path = Urn.normalize_path(self.get_full_path(directory_urn))
-        response = self.execute_request(action='list', path=directory_urn.quote())
+        response = self.execute_request(action='list', path=directory_urn.quote(),headers_ext=headers)
         if get_info:
             subfiles = WebDavXmlUtils.parse_get_list_info_response(response.content)
             return [subfile for subfile in subfiles if Urn.compare_path(path, subfile.get('path')) is False]
@@ -300,7 +304,7 @@ class Client(object):
         return False
 
     @wrap_connection_error
-    def mkdir(self, remote_path):
+    def mkdir(self, remote_path, recursive=False):
         """Makes new directory on WebDAV server.
         More information you can find by link http://webdav.org/specs/rfc4918.html#METHOD_MKCOL
 
@@ -310,10 +314,15 @@ class Client(object):
         """
         directory_urn = Urn(remote_path, directory=True)
         if not self.check(directory_urn.parent()):
-            raise RemoteParentNotFound(directory_urn.path())
+            if recursive == True:
+                self.mkdir(directory_urn.parent(), recursive=True)
+            else:
+                raise RemoteParentNotFound(directory_urn.path())
 
         try:
+            print(f"Making Directory {remote_path}")
             response = self.execute_request(action='mkdir', path=directory_urn.quote())
+            print(f"Made Directory {remote_path}")
         except MethodNotSupported:
             # Yandex WebDAV returns 405 status code when directory already exists
             return True
@@ -481,13 +490,14 @@ class Client(object):
             self.upload(local_path=_local_path, remote_path=_remote_path, progress=progress)
 
     @wrap_connection_error
-    def upload_file(self, remote_path, local_path, progress=None):
+    def upload_file(self, remote_path, local_path, progress=None, force=False):
         """Uploads file to remote path on WebDAV server. File should be 2Gb or less.
         More information you can find by link http://webdav.org/specs/rfc4918.html#METHOD_PUT
 
         :param remote_path: the path to uploading file on WebDAV server.
         :param local_path: the path to local file for uploading.
         :param progress: Progress function. Not supported now.
+        :param force:  if the directory isn't there it will creat the directory
         """
         if not os.path.exists(local_path):
             raise LocalResourceNotFound(local_path)
@@ -500,7 +510,10 @@ class Client(object):
             raise OptionNotValid(name="local_path", value=local_path)
 
         if not self.check(urn.parent()):
-            raise RemoteParentNotFound(urn.path())
+            if force == True:
+                self.mkdir(urn.parent(), recursive=True)
+            else:
+                raise RemoteParentNotFound(urn.path())
 
         with open(local_path, "rb") as local_file:
             self.execute_request(action='upload', path=urn.quote(), data=local_file)
