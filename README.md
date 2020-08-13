@@ -338,3 +338,4 @@ Please use this check list before creating PR:
 1. You code should be formatted according PEP8
 1. All tests should successfully pass
 1. Your changes shouldn't change previous default behaviour, exclude defects
+1. All changes are covered by tests 
