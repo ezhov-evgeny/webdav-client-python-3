@@ -234,7 +234,7 @@ class Client(object):
         return True if self.webdav.valid() else False
 
     @wrap_connection_error
-    def list(self, remote_path=root, get_info=False, recursive=True):
+    def list(self, remote_path=root, get_info=False, recursive=False):
         """Returns list of nested files and directories for remote WebDAV directory by path.
         More information you can find by link http://webdav.org/specs/rfc4918.html#METHOD_PROPFIND
 
@@ -260,7 +260,7 @@ class Client(object):
             raise RemoteResourceNotFound(directory_urn.path())
 
         path = Urn.normalize_path(self.get_full_path(directory_urn))
-        response = self.execute_request(action='list', path=directory_urn.quote(),headers_ext=headers)
+        response = self.execute_request(action='list', path=directory_urn.quote(), headers_ext=headers)
         if get_info:
             subfiles = WebDavXmlUtils.parse_get_list_info_response(response.content)
             return [subfile for subfile in subfiles if Urn.compare_path(path, subfile.get('path')) is False]
