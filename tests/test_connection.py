@@ -57,14 +57,13 @@ class ConnectionTestCase(unittest.TestCase):
         self.assertRaises(OptionNotValid, settings.is_valid)
         self.assertFalse(settings.valid())
 
-    def test_connection_settings_no_token_and_no_login(self):
+    def test_connection_settings_anonymous_login(self):
         options = {
             'webdav_hostname': 'http://localhost:8585'
         }
         webdav_options = get_options(option_type=WebDAVSettings, from_options=options)
         settings = WebDAVSettings(webdav_options)
-        self.assertRaises(OptionNotValid, settings.is_valid)
-        self.assertFalse(settings.valid())
+        self.assertTrue(settings.valid())
 
     def test_connection_settings_wrong_cert_path(self):
         options = {
