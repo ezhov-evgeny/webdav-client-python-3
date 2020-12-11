@@ -140,7 +140,17 @@ options = {
 client = Client(options)
 ```
 
-By default checking of remote resources is enabled.
+By default, checking of remote resources is enabled.
+
+For configuring chunk size of content downloading use `chunk_size` param, by default it is `65536`
+
+```python
+options = {
+ ...
+ 'chunk_size': 65536
+}
+client = Client(options)
+```
 
 **Synchronous methods**
 

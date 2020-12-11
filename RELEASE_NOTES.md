@@ -1,14 +1,21 @@
 Release Notes
 -------------
+**Version 3.14.6**
+
+* Configuring of content downloading chunk size
+
 **Version 3.14.5**
- * An ability to configure a requests timeout
- * An ability to get a `list` method result with detailed information by https://github.com/huangganggui
- 
+
+* An ability to configure a requests timeout
+* An ability to get a `list` method result with detailed information by https://github.com/huangganggui
+
 **Version 3.14.4**
- * Fixed the issue with gzipped content on `download_from`
- 
+
+* Fixed the issue with gzipped content on `download_from`
+
 **Version 3.14.3**
- * Added the etag property in the get info method by https://github.com/huangganggui
+
+* Added the etag property in the get info method by https://github.com/huangganggui
 
 **Version 3.14.2**
  * Use a content type for determining is the resource a directory or not in the `list` method
