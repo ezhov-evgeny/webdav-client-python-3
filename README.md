@@ -38,7 +38,8 @@ Webdav API is a set of webdav actions of work with cloud storage. This set inclu
 
 **Configuring the client**
 
-Required keys for configuring client connection with WevDAV-server are `webdav_hostname` and `webdav_login`, `webdav_password`.
+Required keys for configuring client connection with WevDAV-server are `webdav_hostname` and `webdav_login`, `webdav_password`,
+but for anonymous login  don't set them.
 
 ```python
 from webdav3.client import Client
