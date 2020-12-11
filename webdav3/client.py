@@ -208,7 +208,8 @@ class Client(object):
         response = self.session.request(
             method=self.requests[action],
             url=self.get_url(path),
-            auth=(self.webdav.login, self.webdav.password) if (not self.webdav.token and not self.session.auth) else None,
+            auth=(self.webdav.login, self.webdav.password) if (not self.webdav.token and not self.session.auth)
+                                                                          and (self.webdav.login and self.webdav.password) else None,
             headers=self.get_headers(action, headers_ext),
             timeout=self.timeout,
             cert=(self.webdav.cert_path, self.webdav.key_path) if (self.webdav.cert_path and self.webdav.key_path) else None,
@@ -249,7 +250,7 @@ class Client(object):
                  `etag`: etag of resource,
                  `isdir`: type of resource,
                  `path`: path of resource.
-                 
+
         """
         directory_urn = Urn(remote_path, directory=True)
         if directory_urn.path() != Client.root and not self.check(directory_urn.path()):
