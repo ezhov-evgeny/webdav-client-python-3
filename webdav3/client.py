@@ -619,10 +619,9 @@ class Client(object):
         :return: True in case the remote resource is directory and False otherwise.
         """
         urn = Urn(remote_path)
-        parent_urn = Urn(urn.parent())
         self._check_remote_resource(remote_path, urn)
 
-        response = self.execute_request(action='info', path=parent_urn.quote())
+        response = self.execute_request(action='info', path=urn.quote(), headers_ext=["Depth: 0"])
         path = self.get_full_path(urn)
         return WebDavXmlUtils.parse_is_dir_response(content=response.content, path=path, hostname=self.webdav.hostname)
 
