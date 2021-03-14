@@ -5,7 +5,7 @@ import logging
 import os
 import shutil
 import threading
-from io import BytesIO
+from io import BufferedReader, BytesIO, FileIO
 from re import sub
 from urllib.parse import unquote, urlsplit, urlparse
 
@@ -150,6 +150,7 @@ class Client(object):
         self.requests.update(self.webdav.override_methods)
         self.default_options = {}
         self.timeout = self.webdav.timeout
+        self.chunk_size = 65536
 
     def get_headers(self, action, headers_ext=None):
         """Returns HTTP headers of specified WebDAV actions.
@@ -321,11 +322,35 @@ class Client(object):
         return response.status_code in (200, 201)
 
     @wrap_connection_error
-    def download_from(self, buff, remote_path):
+    def download_iter(self, remote_path):
+        """Downloads file from WebDAV and return content in generator
+
+        :param remote_path: path to file on WebDAV server.
+        """
+
+        urn = Urn(remote_path)
+        if self.is_dir(urn.path()):
+            raise OptionNotValid(name="remote_path", value=remote_path)
+
+        if not self.check(urn.path()):
+            raise RemoteResourceNotFound(urn.path())
+
+        response = self.execute_request(action='download', path=urn.quote())
+        return response.iter_content(chunk_size=self.chunk_size)
+
+    @wrap_connection_error
+    def download_from(self, buff, remote_path, progress=None, progress_args=()):
         """Downloads file from WebDAV and writes it in buffer.
 
         :param buff: buffer object for writing of downloaded file content.
         :param remote_path: path to file on WebDAV server.
+        :param progress: Pass a callback function to view the file transmission progress.
+                The function must take *(current, total)* as positional arguments (look at Other Parameters below for a
+                detailed description) and will be called back each time a new file chunk has been successfully
+                transmitted. Example def progress_update(current, total, *args) ...
+        :param progress_args: A tuple with extra custom arguments for the progress callback function.
+                You can pass anything you need to be available in the progress callback scope; for example, a Message
+                object or a Client instance in order to edit the message with the updated progress status.
         """
         urn = Urn(remote_path)
         if self.is_dir(urn.path()):
@@ -335,30 +360,51 @@ class Client(object):
             raise RemoteResourceNotFound(urn.path())
 
         response = self.execute_request(action='download', path=urn.quote())
-        for chunk in response.iter_content(chunk_size=self.webdav.chunk_size):
-            buff.write(chunk)
+        total = int(response.headers['content-length'])
+        current = 0
 
-    def download(self, remote_path, local_path, progress=None):
+        if callable(progress):
+            progress(current, total, progress_args) # zero call
+
+        for chunk in response.iter_content(chunk_size=self.chunk_size):
+            buff.write(chunk)
+            current += self.chunk_size
+            if callable(progress):
+                progress(current, total, progress_args)
+
+    def download(self, remote_path, local_path, progress=None, progress_args=()):
         """Downloads remote resource from WebDAV and save it in local path.
         More information you can find by link http://webdav.org/specs/rfc4918.html#rfc.section.9.4
 
         :param remote_path: the path to remote resource for downloading can be file and directory.
         :param local_path: the path to save resource locally.
-        :param progress: progress function. Not supported now.
+        :param progress: Pass a callback function to view the file transmission progress.
+                The function must take *(current, total)* as positional arguments (look at Other Parameters below for a
+                detailed description) and will be called back each time a new file chunk has been successfully
+                transmitted. Example def progress_update(current, total, *args) ...
+        :param progress_args: A tuple with extra custom arguments for the progress callback function.
+                You can pass anything you need to be available in the progress callback scope; for example, a Message
+                object or a Client instance in order to edit the message with the updated progress status.
         """
         urn = Urn(remote_path)
         if self.is_dir(urn.path()):
-            self.download_directory(local_path=local_path, remote_path=remote_path, progress=progress)
+            self.download_directory(local_path=local_path, remote_path=remote_path, progress=progress, progress_args=progress_args)
         else:
-            self.download_file(local_path=local_path, remote_path=remote_path, progress=progress)
+            self.download_file(local_path=local_path, remote_path=remote_path, progress=progress, progress_args=progress_args)
 
-    def download_directory(self, remote_path, local_path, progress=None):
+    def download_directory(self, remote_path, local_path, progress=None, progress_args=()):
         """Downloads directory and downloads all nested files and directories from remote WebDAV to local.
         If there is something on local path it deletes directories and files then creates new.
 
         :param remote_path: the path to directory for downloading form WebDAV server.
         :param local_path: the path to local directory for saving downloaded files and directories.
-        :param progress: Progress function. Not supported now.
+        :param progress: Pass a callback function to view the file transmission progress.
+                The function must take *(current, total)* as positional arguments (look at Other Parameters below for a
+                detailed description) and will be called back each time a new file chunk has been successfully
+                transmitted. Example def progress_update(current, total, *args) ...
+        :param progress_args: A tuple with extra custom arguments for the progress callback function.
+                You can pass anything you need to be available in the progress callback scope; for example, a Message
+                object or a Client instance in order to edit the message with the updated progress status.
         """
         urn = Urn(remote_path, directory=True)
         if not self.is_dir(urn.path()):
@@ -374,16 +420,22 @@ class Client(object):
                 continue
             _remote_path = "{parent}{name}".format(parent=urn.path(), name=resource_name)
             _local_path = os.path.join(local_path, resource_name)
-            self.download(local_path=_local_path, remote_path=_remote_path, progress=progress)
+            self.download(local_path=_local_path, remote_path=_remote_path, progress=progress, progress_args=progress_args)
 
     @wrap_connection_error
-    def download_file(self, remote_path, local_path, progress=None):
+    def download_file(self, remote_path, local_path, progress=None, progress_args=()):
         """Downloads file from WebDAV server and save it locally.
         More information you can find by link http://webdav.org/specs/rfc4918.html#rfc.section.9.4
 
         :param remote_path: the path to remote file for downloading.
         :param local_path: the path to save file locally.
-        :param progress: progress function. Not supported now.
+        :param progress: Pass a callback function to view the file transmission progress.
+                The function must take *(current, total)* as positional arguments (look at Other Parameters below for a
+                detailed description) and will be called back each time a new file chunk has been successfully
+                transmitted. Example def progress_update(current, total, *args) ...
+        :param progress_args: A tuple with extra custom arguments for the progress callback function.
+                You can pass anything you need to be available in the progress callback scope; for example, a Message
+                object or a Client instance in order to edit the message with the updated progress status.
         """
         urn = Urn(remote_path)
         if self.is_dir(urn.path()):
@@ -395,31 +447,76 @@ class Client(object):
         if not self.check(urn.path()):
             raise RemoteResourceNotFound(urn.path())
 
-        with open(local_path, 'wb') as local_file:
+        with open(local_path, 'wb') as local_file:            
             response = self.execute_request('download', urn.quote())
-            for block in response.iter_content(chunk_size=self.webdav.chunk_size):
-                local_file.write(block)
+            total = int(response.headers['content-length'])
+            current = 0
 
-    def download_sync(self, remote_path, local_path, callback=None):
+            if callable(progress):
+                progress(current, total, progress_args) # zero call
+
+            for block in response.iter_content(chunk_size=self.chunk_size):
+                local_file.write(block)
+                current += self.chunk_size
+                if callable(progress):
+                    progress(current, total, progress_args)
+
+
+    def download_sync(self, remote_path, local_path, callback=None, progress=None, progress_args=()):
         """Downloads remote resources from WebDAV server synchronously.
 
         :param remote_path: the path to remote resource on WebDAV server. Can be file and directory.
         :param local_path: the path to save resource locally.
         :param callback: the callback which will be invoked when downloading is complete.
+        :param progress: Pass a callback function to view the file transmission progress.
+                The function must take *(current, total)* as positional arguments (look at Other Parameters below for a
+                detailed description) and will be called back each time a new file chunk has been successfully
+                transmitted. Example def progress_update(current, total, *args) ...
+        :param progress_args: A tuple with extra custom arguments for the progress callback function.
+                You can pass anything you need to be available in the progress callback scope; for example, a Message
+                object or a Client instance in order to edit the message with the updated progress status.
         """
-        self.download(local_path=local_path, remote_path=remote_path)
+        self.download(local_path=local_path, remote_path=remote_path, progress=progress, progress_args=progress_args)
         if callback:
             callback()
 
-    def download_async(self, remote_path, local_path, callback=None):
+    def download_async(self, remote_path, local_path, callback=None, progress=None, progress_args=()):
         """Downloads remote resources from WebDAV server asynchronously
 
         :param remote_path: the path to remote resource on WebDAV server. Can be file and directory.
         :param local_path: the path to save resource locally.
         :param callback: the callback which will be invoked when downloading is complete.
+        :param progress: Pass a callback function to view the file transmission progress.
+                The function must take *(current, total)* as positional arguments (look at Other Parameters below for a
+                detailed description) and will be called back each time a new file chunk has been successfully
+                transmitted. Example def progress_update(current, total, *args) ...
+        :param progress_args: A tuple with extra custom arguments for the progress callback function.
+                You can pass anything you need to be available in the progress callback scope; for example, a Message
+                object or a Client instance in order to edit the message with the updated progress status.
         """
-        target = (lambda: self.download_sync(local_path=local_path, remote_path=remote_path, callback=callback))
+        target = (lambda: self.download_sync(local_path=local_path, remote_path=remote_path, 
+                allback=callback, progress=progress, progress_args=progress_args))
         threading.Thread(target=target).start()
+
+    @wrap_connection_error
+    def upload_iter(self, read_callback, remote_path):
+        """Uploads file from buffer to remote path on WebDAV server.
+        More information you can find by link http://webdav.org/specs/rfc4918.html#METHOD_PUT
+
+        :param buff: the buffer with content for file.
+        :param remote_path: the path to save file remotely on WebDAV server.
+        """
+        urn = Urn(remote_path)
+        if urn.is_dir():
+            raise OptionNotValid(name="remote_path", value=remote_path)
+
+        if not self.check(urn.parent()):
+            raise RemoteParentNotFound(urn.path())
+            
+        if not isinstance(read_callback, callable):
+            raise OptionNotValid(name='read_callback', value=read_callback)
+
+        self.execute_request(action='upload', path=urn.quote(), data=read_callback)
 
     @wrap_connection_error
     def upload_to(self, buff, remote_path):
@@ -438,28 +535,40 @@ class Client(object):
 
         self.execute_request(action='upload', path=urn.quote(), data=buff)
 
-    def upload(self, remote_path, local_path, progress=None):
+    def upload(self, remote_path, local_path, progress=None, progress_args=()):
         """Uploads resource to remote path on WebDAV server.
         In case resource is directory it will upload all nested files and directories.
         More information you can find by link http://webdav.org/specs/rfc4918.html#METHOD_PUT
 
         :param remote_path: the path for uploading resources on WebDAV server. Can be file and directory.
         :param local_path: the path to local resource for uploading.
-        :param progress: Progress function. Not supported now.
+        :param progress: Pass a callback function to view the file transmission progress.
+                The function must take *(current, total)* as positional arguments (look at Other Parameters below for a
+                detailed description) and will be called back each time a new file chunk has been successfully
+                transmitted. Example def progress_update(current, total, *args) ...
+        :param progress_args: A tuple with extra custom arguments for the progress callback function.
+                You can pass anything you need to be available in the progress callback scope; for example, a Message
+                object or a Client instance in order to edit the message with the updated progress status.
         """
         if os.path.isdir(local_path):
-            self.upload_directory(local_path=local_path, remote_path=remote_path, progress=progress)
+            self.upload_directory(local_path=local_path, remote_path=remote_path, progress=progress, progress_args=progress_args)
         else:
-            self.upload_file(local_path=local_path, remote_path=remote_path)
+            self.upload_file(local_path=local_path, remote_path=remote_path, progress_args=progress_args)
 
-    def upload_directory(self, remote_path, local_path, progress=None):
+    def upload_directory(self, remote_path, local_path, progress=None, progress_args=()):
         """Uploads directory to remote path on WebDAV server.
         In case directory is exist on remote server it will delete it and then upload directory with nested files and
         directories.
 
         :param remote_path: the path to directory for uploading on WebDAV server.
         :param local_path: the path to local directory for uploading.
-        :param progress: Progress function. Not supported now.
+        :param progress: Pass a callback function to view the file transmission progress.
+                The function must take *(current, total)* as positional arguments (look at Other Parameters below for a
+                detailed description) and will be called back each time a new file chunk has been successfully
+                transmitted. Example def progress_update(current, total, *args) ...
+        :param progress_args: A tuple with extra custom arguments for the progress callback function.
+                You can pass anything you need to be available in the progress callback scope; for example, a Message
+                object or a Client instance in order to edit the message with the updated progress status.
         """
         urn = Urn(remote_path, directory=True)
         if not urn.is_dir():
@@ -479,16 +588,22 @@ class Client(object):
         for resource_name in listdir(local_path):
             _remote_path = "{parent}{name}".format(parent=urn.path(), name=resource_name).replace('\\', '')
             _local_path = os.path.join(local_path, resource_name)
-            self.upload(local_path=_local_path, remote_path=_remote_path, progress=progress)
+            self.upload(local_path=_local_path, remote_path=_remote_path, progress=progress, progress_args=progress_args)
 
     @wrap_connection_error
-    def upload_file(self, remote_path, local_path, progress=None):
+    def upload_file(self, remote_path, local_path, progress=None, progress_args=()):
         """Uploads file to remote path on WebDAV server. File should be 2Gb or less.
         More information you can find by link http://webdav.org/specs/rfc4918.html#METHOD_PUT
 
         :param remote_path: the path to uploading file on WebDAV server.
         :param local_path: the path to local file for uploading.
-        :param progress: Progress function. Not supported now.
+        :param progress: Pass a callback function to view the file transmission progress.
+                The function must take *(current, total)* as positional arguments (look at Other Parameters below for a
+                detailed description) and will be called back each time a new file chunk has been successfully
+                transmitted. Example def progress_update(current, total, *args) ...
+        :param progress_args: A tuple with extra custom arguments for the progress callback function.
+                You can pass anything you need to be available in the progress callback scope; for example, a Message
+                object or a Client instance in order to edit the message with the updated progress status.
         """
         if not os.path.exists(local_path):
             raise LocalResourceNotFound(local_path)
@@ -501,33 +616,65 @@ class Client(object):
             raise OptionNotValid(name="local_path", value=local_path)
 
         if not self.check(urn.parent()):
-            raise RemoteParentNotFound(urn.path())
+            raise RemoteParentNotFound(urn.path())        
 
         with open(local_path, "rb") as local_file:
-            self.execute_request(action='upload', path=urn.quote(), data=local_file)
+            total = os.path.getsize(local_path)
 
-    def upload_sync(self, remote_path, local_path, callback=None):
+            def read_in_chunks(file_object):
+                progress(0, total, progress_args)
+                current = 0
+
+                while current < total:
+                    data = file_object.read(self.chunk_size)
+                    progress(current, total, progress_args) # call to progress function
+                    current += len(data)
+                    if not data:
+                        break
+                    yield data
+
+            if callable(progress):
+                self.execute_request(action='upload', path=urn.quote(), data=read_in_chunks(local_file))
+            else:
+                self.execute_request(action='upload', path=urn.quote(), data=local_file)
+
+    def upload_sync(self, remote_path, local_path, callback=None, progress=None, progress_args=()):
         """Uploads resource to remote path on WebDAV server synchronously.
         In case resource is directory it will upload all nested files and directories.
 
         :param remote_path: the path for uploading resources on WebDAV server. Can be file and directory.
         :param local_path: the path to local resource for uploading.
         :param callback: the callback which will be invoked when downloading is complete.
+        :param progress: Pass a callback function to view the file transmission progress.
+                The function must take *(current, total)* as positional arguments (look at Other Parameters below for a
+                detailed description) and will be called back each time a new file chunk has been successfully
+                transmitted. Example def progress_update(current, total, *args) ...
+        :param progress_args: A tuple with extra custom arguments for the progress callback function.
+                You can pass anything you need to be available in the progress callback scope; for example, a Message
+                object or a Client instance in order to edit the message with the updated progress status.
         """
-        self.upload(local_path=local_path, remote_path=remote_path)
+        self.upload(local_path=local_path, remote_path=remote_path, progress=progress, progress_args=progress_args)
 
         if callback:
             callback()
 
-    def upload_async(self, remote_path, local_path, callback=None):
+    def upload_async(self, remote_path, local_path, callback=None, progress=None, progress_args=()):
         """Uploads resource to remote path on WebDAV server asynchronously.
         In case resource is directory it will upload all nested files and directories.
 
         :param remote_path: the path for uploading resources on WebDAV server. Can be file and directory.
         :param local_path: the path to local resource for uploading.
         :param callback: the callback which will be invoked when downloading is complete.
+        :param progress: Pass a callback function to view the file transmission progress.
+                The function must take *(current, total)* as positional arguments (look at Other Parameters below for a
+                detailed description) and will be called back each time a new file chunk has been successfully
+                transmitted. Example def progress_update(current, total, *args) ...
+        :param progress_args: A tuple with extra custom arguments for the progress callback function.
+                You can pass anything you need to be available in the progress callback scope; for example, a Message
+                object or a Client instance in order to edit the message with the updated progress status.
         """
-        target = (lambda: self.upload_sync(local_path=local_path, remote_path=remote_path, callback=callback))
+        target = (lambda: self.upload_sync(local_path=local_path, remote_path=remote_path, callback=callback, 
+                    progress=progress, progress_args=progress_args))
         threading.Thread(target=target).start()
 
     @wrap_connection_error
