@@ -364,13 +364,13 @@ class Client(object):
         current = 0
 
         if callable(progress):
-            progress(current, total, progress_args) # zero call
+            progress(current, total, *progress_args) # zero call
 
         for chunk in response.iter_content(chunk_size=self.chunk_size):
             buff.write(chunk)
             current += self.chunk_size
             if callable(progress):
-                progress(current, total, progress_args)
+                progress(current, total, *progress_args)
 
     def download(self, remote_path, local_path, progress=None, progress_args=()):
         """Downloads remote resource from WebDAV and save it in local path.
@@ -453,13 +453,13 @@ class Client(object):
             current = 0
 
             if callable(progress):
-                progress(current, total, progress_args) # zero call
+                progress(current, total, *progress_args) # zero call
 
             for block in response.iter_content(chunk_size=self.chunk_size):
                 local_file.write(block)
                 current += self.chunk_size
                 if callable(progress):
-                    progress(current, total, progress_args)
+                    progress(current, total, *progress_args)
 
 
     def download_sync(self, remote_path, local_path, callback=None, progress=None, progress_args=()):
@@ -622,12 +622,12 @@ class Client(object):
             total = os.path.getsize(local_path)
 
             def read_in_chunks(file_object):
-                progress(0, total, progress_args)
+                progress(0, total, *progress_args)
                 current = 0
 
                 while current < total:
                     data = file_object.read(self.chunk_size)
-                    progress(current, total, progress_args) # call to progress function
+                    progress(current, total, *progress_args) # call to progress function
                     current += len(data)
                     if not data:
                         break
