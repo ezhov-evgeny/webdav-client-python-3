@@ -128,17 +128,18 @@ class Client(object):
             WebDev settings:
             `webdav_hostname`: url for WebDAV server should contain protocol and ip address or domain name.
                                Example: `https://webdav.server.com`.
-            `webdav_login`: (optional) login name for WebDAV server can be empty in case using of token auth.
-            `webdav_password`: (optional) password for WebDAV server can be empty in case using of token auth.
-            `webdav_token': (optional) token for WebDAV server can be empty in case using of login/password auth.
-            `webdav_root`: (optional) root directory of WebDAV server. Defaults is `/`.
-            `webdav_cert_path`: (optional) path to certificate.
-            `webdav_key_path`: (optional) path to private key.
-            `webdav_recv_speed`: (optional) rate limit data download speed in Bytes per second.
+            `webdav_login`: (optional) Login name for WebDAV server. Can be empty when using token auth.
+            `webdav_password`: (optional) Password for WebDAV server. Can be empty when using token auth.
+            `webdav_token': (optional) Authentication token for WebDAV server. Can be empty when using login/password auth.
+            `webdav_root`: (optional) Root directory of WebDAV server. Default is `/`.
+            `webdav_cert_path`: (optional) Path to client certificate.
+            `webdav_key_path`: (optional) Path to private key of the client certificate.
+            `webdav_recv_speed`: (optional) Rate limit of data download speed in Bytes per second.
                                  Defaults to unlimited speed.
-            `webdav_send_speed`: (optional) rate limit data upload speed in Bytes per second.
+            `webdav_send_speed`: (optional) Rate limit of data upload speed in Bytes per second.
                                  Defaults to unlimited speed.
-            `webdav_verbose`: (optional) set verbose mode on.off. By default verbose mode is off.
+            `webdav_timeout`: (optional) Timeout in seconds used in HTTP connection managed by requests. Defaults to 30 seconds.
+            `webdav_verbose`: (optional) Set verbose mode on/off. By default verbose mode is off.
 
         """
         self.session = requests.Session()
