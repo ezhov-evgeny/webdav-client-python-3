@@ -34,6 +34,7 @@ class ClientTestCase(TestCase):
         self.assertEqual(result[0]['etag'], 'ab0b4b7973803c03639b848682b5f38c')
         self.assertEqual(result[0]['isdir'], False)
         self.assertEqual(result[0]['path'], '/test_dir/test.txt')
+        self.assertEqual(result[0]['content_type'], 'text/plain')
 
     def test_parse_get_list_response_empty(self):
         content = read_file_content('./tests/responses/get_list_empty.xml')
@@ -78,6 +79,7 @@ class ClientTestCase(TestCase):
         self.assertEqual(result['name'], 'test.txt')
         self.assertEqual(result['modified'], 'Wed, 18 Oct 2017 15:16:04 GMT')
         self.assertEqual(result['size'], '41')
+        self.assertEqual(result['content_type'], 'text/plain')
     
     def test_get_info_from_response(self):
         content = read_file_content('./tests/responses/get_info.xml')
@@ -87,6 +89,7 @@ class ClientTestCase(TestCase):
         self.assertEqual(result['name'], 'test.txt')
         self.assertEqual(result['modified'], 'Wed, 18 Oct 2017 15:16:04 GMT')
         self.assertEqual(result['size'], '41')
+        self.assertEqual(result['content_type'], 'text/plain')
 
     def test_create_get_property_request_content(self):
         option = {
