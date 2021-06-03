@@ -210,14 +210,14 @@ client.move(remote_path_from="dir2", remote_path_to="dir3")
 ```
 
 ```python
-# Move resource
+# Download a resource
 
 client.download_sync(remote_path="dir1/file1", local_path="~/Downloads/file1")
 client.download_sync(remote_path="dir1/dir2/", local_path="~/Downloads/dir2/")
 ```
 
 ```python
-# Unload resource
+# Upload resource
 
 client.upload_sync(remote_path="dir1/file1", local_path="~/Documents/file1")
 client.upload_sync(remote_path="dir1/dir2/", local_path="~/Documents/dir2/")
