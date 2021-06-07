@@ -249,6 +249,7 @@ class Client(object):
                  `size`: size of resource,
                  `modified`: date of resource modification,
                  `etag`: etag of resource,
+                 `content_type`: content type of resource,
                  `isdir`: type of resource,
                  `path`: path of resource.
 
@@ -598,7 +599,8 @@ class Client(object):
                  `name`: name of resource,
                  `size`: size of resource,
                  `modified`: date of resource modification,
-                 `etag`: etag of resource.
+                 `etag`: etag of resource,
+                 `content_type`: content type of resource.
         """
         urn = Urn(remote_path)
         self._check_remote_resource(remote_path, urn)
@@ -876,6 +878,7 @@ class WebDavXmlUtils:
                  `size`: size of resource,
                  `modified`: date of resource modification,
                  `etag`: etag of resource,
+                 `content_type`: content type of resource,
                  `isdir`: type of resource,
                  `path`: path of resource.
         """
@@ -961,7 +964,8 @@ class WebDavXmlUtils:
                  `name`: name of resource,
                  `size`: size of resource,
                  `modified`: date of resource modification,
-                 `etag`: etag of resource
+                 `etag`: etag of resource,
+                 `content_type`: content type of resource.
         """
         find_attributes = {
             'created': ".//{DAV:}creationdate",
@@ -969,6 +973,7 @@ class WebDavXmlUtils:
             'size': ".//{DAV:}getcontentlength",
             'modified': ".//{DAV:}getlastmodified",
             'etag': ".//{DAV:}getetag",
+            'content_type': ".//{DAV:}getcontenttype",
         }
         info = dict()
         for (name, value) in find_attributes.items():
@@ -987,7 +992,8 @@ class WebDavXmlUtils:
                  `name`: name of resource,
                  `size`: size of resource,
                  `modified`: date of resource modification,
-                 `etag`: etag of resource.
+                 `etag`: etag of resource,
+                 `content_type`: content type of resource.
         """
         response = WebDavXmlUtils.extract_response_for_path(content=content, path=path, hostname=hostname)
         return WebDavXmlUtils.get_info_from_response(response)
