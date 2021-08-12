@@ -50,7 +50,7 @@ except TypeError:
 setup(
     name='webdavclient3',
     version=version,
-    packages=find_packages(),
+    packages=find_packages(exclude=('tests',)),
     requires=['python (>= 3.3.0)'],
     install_requires=['requests', 'lxml', 'python-dateutil'],
     scripts=['wdc'],
