@@ -9,6 +9,7 @@ Release Notes
 * Add content type parsing by https://github.com/foucdeg
 * Excluding tests directory from a setup package by https://github.com/a-guzhin
 * Doc improvements by https://github.com/mephinet
+* Enable testing of Python 3.9 support
 
 **Version 3.14.5**
 
