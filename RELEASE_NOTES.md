@@ -2,8 +2,13 @@ Release Notes
 -------------
 **Version 3.14.6**
 
-* Configuring of content downloading chunk size
-* Ability to use an anonymous login
+* Configuring of content downloading chunk size by https://github.com/nuwang
+* Ability to use an anonymous login by https://github.com/f100024
+* is_dir performance optimization by https://github.com/liuliqiu
+* Add support for progress callback in up/download by https://github.com/jorgeajimenezl
+* Add content type parsing by https://github.com/foucdeg
+* Excluding tests directory from a setup package by https://github.com/a-guzhin
+* Doc improvements by https://github.com/mephinet
 
 **Version 3.14.5**
 
