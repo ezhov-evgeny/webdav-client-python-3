@@ -25,7 +25,7 @@ class WebDAVSettings(ConnectionSettings):
     ns = "webdav:"
     prefix = "webdav_"
     keys = {'hostname', 'login', 'password', 'token', 'root', 'cert_path', 'key_path', 'recv_speed', 'send_speed',
-            'verbose', 'disable_check', 'override_methods', 'timeout'}
+            'verbose', 'disable_check', 'override_methods', 'timeout', 'chunk_size'}
 
     def __init__(self, options):
         self.hostname = None
@@ -41,6 +41,7 @@ class WebDAVSettings(ConnectionSettings):
         self.disable_check = False
         self.override_methods = {}
         self.timeout = 30
+        self.chunk_size = 65536
 
         self.options = dict()
 
@@ -68,8 +69,5 @@ class WebDAVSettings(ConnectionSettings):
             raise OptionNotValid(name="cert_path", value=self.cert_path, ns=self.ns)
 
         if self.password and not self.login:
-            raise OptionNotValid(name="login", value=self.login, ns=self.ns)
-
-        if not self.token and not self.login:
             raise OptionNotValid(name="login", value=self.login, ns=self.ns)
         return True
