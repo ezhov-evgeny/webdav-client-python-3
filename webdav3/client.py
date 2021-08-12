@@ -14,7 +14,8 @@ import requests
 from dateutil import parser as dateutil_parser
 
 from webdav3.connection import WebDAVSettings
-from webdav3.exceptions import NoConnection, ConnectionException, NotEnoughSpace, RemoteResourceNotFound, MethodNotSupported, ResponseErrorCode, \
+from webdav3.exceptions import NoConnection, ConnectionException, NotEnoughSpace, RemoteResourceNotFound, \
+    MethodNotSupported, ResponseErrorCode, \
     RemoteParentNotFound, OptionNotValid, LocalResourceNotFound
 from webdav3.urn import Urn
 
@@ -209,10 +210,12 @@ class Client(object):
             method=self.requests[action],
             url=self.get_url(path),
             auth=(self.webdav.login, self.webdav.password) if (not self.webdav.token and not self.session.auth)
-                                                                          and (self.webdav.login and self.webdav.password) else None,
+                                                              and (
+                                                                          self.webdav.login and self.webdav.password) else None,
             headers=self.get_headers(action, headers_ext),
             timeout=self.timeout,
-            cert=(self.webdav.cert_path, self.webdav.key_path) if (self.webdav.cert_path and self.webdav.key_path) else None,
+            cert=(self.webdav.cert_path, self.webdav.key_path) if (
+                        self.webdav.cert_path and self.webdav.key_path) else None,
             data=data,
             stream=True,
             verify=self.verify
@@ -364,7 +367,7 @@ class Client(object):
         current = 0
 
         if callable(progress):
-            progress(current, total, *progress_args) # zero call
+            progress(current, total, *progress_args)  # zero call
 
         for chunk in response.iter_content(chunk_size=self.chunk_size):
             buff.write(chunk)
@@ -388,9 +391,11 @@ class Client(object):
         """
         urn = Urn(remote_path)
         if self.is_dir(urn.path()):
-            self.download_directory(local_path=local_path, remote_path=remote_path, progress=progress, progress_args=progress_args)
+            self.download_directory(local_path=local_path, remote_path=remote_path, progress=progress,
+                                    progress_args=progress_args)
         else:
-            self.download_file(local_path=local_path, remote_path=remote_path, progress=progress, progress_args=progress_args)
+            self.download_file(local_path=local_path, remote_path=remote_path, progress=progress,
+                               progress_args=progress_args)
 
     def download_directory(self, remote_path, local_path, progress=None, progress_args=()):
         """Downloads directory and downloads all nested files and directories from remote WebDAV to local.
@@ -420,7 +425,8 @@ class Client(object):
                 continue
             _remote_path = "{parent}{name}".format(parent=urn.path(), name=resource_name)
             _local_path = os.path.join(local_path, resource_name)
-            self.download(local_path=_local_path, remote_path=_remote_path, progress=progress, progress_args=progress_args)
+            self.download(local_path=_local_path, remote_path=_remote_path, progress=progress,
+                          progress_args=progress_args)
 
     @wrap_connection_error
     def download_file(self, remote_path, local_path, progress=None, progress_args=()):
@@ -447,20 +453,19 @@ class Client(object):
         if not self.check(urn.path()):
             raise RemoteResourceNotFound(urn.path())
 
-        with open(local_path, 'wb') as local_file:            
+        with open(local_path, 'wb') as local_file:
             response = self.execute_request('download', urn.quote())
             total = int(response.headers['content-length'])
             current = 0
 
             if callable(progress):
-                progress(current, total, *progress_args) # zero call
+                progress(current, total, *progress_args)  # zero call
 
             for block in response.iter_content(chunk_size=self.chunk_size):
                 local_file.write(block)
                 current += self.chunk_size
                 if callable(progress):
                     progress(current, total, *progress_args)
-
 
     def download_sync(self, remote_path, local_path, callback=None, progress=None, progress_args=()):
         """Downloads remote resources from WebDAV server synchronously.
@@ -494,8 +499,8 @@ class Client(object):
                 You can pass anything you need to be available in the progress callback scope; for example, a Message
                 object or a Client instance in order to edit the message with the updated progress status.
         """
-        target = (lambda: self.download_sync(local_path=local_path, remote_path=remote_path, 
-                allback=callback, progress=progress, progress_args=progress_args))
+        target = (lambda: self.download_sync(local_path=local_path, remote_path=remote_path,
+                                             callback=callback, progress=progress, progress_args=progress_args))
         threading.Thread(target=target).start()
 
     @wrap_connection_error
@@ -503,8 +508,8 @@ class Client(object):
         """Uploads file from buffer to remote path on WebDAV server.
         More information you can find by link http://webdav.org/specs/rfc4918.html#METHOD_PUT
 
-        :param buff: the buffer with content for file.
-        :param remote_path: the path to save file remotely on WebDAV server.
+        :param callable read_callback: the read callback.
+        :param str remote_path: the path to save file remotely on WebDAV server.
         """
         urn = Urn(remote_path)
         if urn.is_dir():
@@ -512,8 +517,8 @@ class Client(object):
 
         if not self.check(urn.parent()):
             raise RemoteParentNotFound(urn.path())
-            
-        if not isinstance(read_callback, callable):
+
+        if not callable(read_callback):
             raise OptionNotValid(name='read_callback', value=read_callback)
 
         self.execute_request(action='upload', path=urn.quote(), data=read_callback)
@@ -551,7 +556,8 @@ class Client(object):
                 object or a Client instance in order to edit the message with the updated progress status.
         """
         if os.path.isdir(local_path):
-            self.upload_directory(local_path=local_path, remote_path=remote_path, progress=progress, progress_args=progress_args)
+            self.upload_directory(local_path=local_path, remote_path=remote_path, progress=progress,
+                                  progress_args=progress_args)
         else:
             self.upload_file(local_path=local_path, remote_path=remote_path, progress_args=progress_args)
 
@@ -588,7 +594,8 @@ class Client(object):
         for resource_name in listdir(local_path):
             _remote_path = "{parent}{name}".format(parent=urn.path(), name=resource_name).replace('\\', '')
             _local_path = os.path.join(local_path, resource_name)
-            self.upload(local_path=_local_path, remote_path=_remote_path, progress=progress, progress_args=progress_args)
+            self.upload(local_path=_local_path, remote_path=_remote_path, progress=progress,
+                        progress_args=progress_args)
 
     @wrap_connection_error
     def upload_file(self, remote_path, local_path, progress=None, progress_args=()):
@@ -616,7 +623,7 @@ class Client(object):
             raise OptionNotValid(name="local_path", value=local_path)
 
         if not self.check(urn.parent()):
-            raise RemoteParentNotFound(urn.path())        
+            raise RemoteParentNotFound(urn.path())
 
         with open(local_path, "rb") as local_file:
             total = os.path.getsize(local_path)
@@ -627,7 +634,7 @@ class Client(object):
 
                 while current < total:
                     data = file_object.read(self.chunk_size)
-                    progress(current, total, *progress_args) # call to progress function
+                    progress(current, total, *progress_args)  # call to progress function
                     current += len(data)
                     if not data:
                         break
@@ -673,8 +680,8 @@ class Client(object):
                 You can pass anything you need to be available in the progress callback scope; for example, a Message
                 object or a Client instance in order to edit the message with the updated progress status.
         """
-        target = (lambda: self.upload_sync(local_path=local_path, remote_path=remote_path, callback=callback, 
-                    progress=progress, progress_args=progress_args))
+        target = (lambda: self.upload_sync(local_path=local_path, remote_path=remote_path, callback=callback,
+                                           progress=progress, progress_args=progress_args))
         threading.Thread(target=target).start()
 
     @wrap_connection_error
@@ -738,7 +745,7 @@ class Client(object):
         """Gets information about resource on WebDAV.
         More information you can find by link http://webdav.org/specs/rfc4918.html#METHOD_PROPFIND
 
-        :param remote_path: the path to remote resource.
+        :param str remote_path: the path to remote resource.
         :return: a dictionary of information attributes and them values with following keys:
                  `created`: date of resource creation,
                  `name`: name of resource,
@@ -843,7 +850,8 @@ class Client(object):
 
         for local_resource_name in listdir(local_directory):
             local_path = os.path.join(local_directory, local_resource_name)
-            remote_path = "{remote_directory}{resource_name}".format(remote_directory=urn.path(), resource_name=local_resource_name)
+            remote_path = "{remote_directory}{resource_name}".format(remote_directory=urn.path(),
+                                                                     resource_name=local_resource_name)
 
             if os.path.isdir(local_path):
                 if not self.check(remote_path=remote_path):
@@ -851,7 +859,8 @@ class Client(object):
                 result = self.push(remote_directory=remote_path, local_directory=local_path)
                 updated = updated or result
             else:
-                if local_resource_name in remote_resource_names and not self.is_local_more_recent(local_path, remote_path):
+                if local_resource_name in remote_resource_names \
+                        and not self.is_local_more_recent(local_path, remote_path):
                     continue
                 self.upload_file(remote_path=remote_path, local_path=local_path)
                 updated = True
@@ -876,7 +885,8 @@ class Client(object):
             if urn.path().endswith(remote_resource_name):
                 continue
             local_path = os.path.join(local_directory, remote_resource_name)
-            remote_path = "{remote_directory}{resource_name}".format(remote_directory=urn.path(), resource_name=remote_resource_name)
+            remote_path = "{remote_directory}{resource_name}".format(remote_directory=urn.path(),
+                                                                     resource_name=remote_resource_name)
             remote_urn = Urn(remote_path)
 
             if remote_urn.path().endswith("/"):
@@ -896,8 +906,8 @@ class Client(object):
     def is_local_more_recent(self, local_path, remote_path):
         """Tells if local resource is more recent that the remote on if possible
 
-        :param local_path: the path to local resource.
-        :param remote_path: the path to remote resource.
+        :param str local_path: the path to local resource.
+        :param str remote_path: the path to remote resource.
 
         :return: True if local resource is more recent, False if the remote one is
                  None if comparison is not possible
