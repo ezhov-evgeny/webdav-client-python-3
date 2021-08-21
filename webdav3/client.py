@@ -193,7 +193,7 @@ class Client(object):
         :param urn: the URN to resource.
         :return: full path to resource with root path.
         """
-        return "{root}{path}".format(root=self.webdav.root, path=urn.path())
+        return "{root}{path}".format(root=unquote(self.webdav.root), path=urn.path())
 
     def execute_request(self, action, path, data=None, headers_ext=None):
         """Generate request to WebDAV server for specified action and path and execute it.
