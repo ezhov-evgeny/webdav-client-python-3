@@ -16,7 +16,7 @@ from dateutil import parser as dateutil_parser
 from webdav3.connection import WebDAVSettings
 from webdav3.exceptions import NoConnection, ConnectionException, NotEnoughSpace, RemoteResourceNotFound, \
     MethodNotSupported, ResponseErrorCode, \
-    RemoteParentNotFound, OptionNotValid, LocalResourceNotFound
+    RemoteParentNotFound, OptionNotValid, LocalResourceNotFound, ResourceLocked
 from webdav3.urn import Urn
 
 log = logging.getLogger(__name__)
@@ -115,7 +115,9 @@ class Client(object):
         'unpublish': "PROPPATCH",
         'published': "PROPPATCH",
         'get_property': "PROPFIND",
-        'set_property': "PROPPATCH"
+        'set_property': "PROPPATCH",
+        'lock': "LOCK",
+        'unlock': "UNLOCK"
     }
 
     meta_xmlns = {
@@ -224,6 +226,8 @@ class Client(object):
             raise NotEnoughSpace()
         if response.status_code == 404:
             raise RemoteResourceNotFound(path=path)
+        if response.status_code == 423:
+            raise ResourceLocked(path=path)
         if response.status_code == 405:
             raise MethodNotSupported(name=action, server=self.webdav.hostname)
         if response.status_code >= 400:
@@ -830,6 +834,28 @@ class Client(object):
         data = WebDavXmlUtils.create_set_property_batch_request_content(option)
         self.execute_request(action='set_property', path=urn.quote(), data=data)
 
+    @wrap_connection_error
+    def lock(self, remote_path=root, timeout=0):
+        """Creates a lock on the given path and returns a LockClient that handles the lock.
+        To ensure the lock is released this should be called using with `with client.lock("path") as c:`.
+        More information at http://webdav.org/specs/rfc4918.html#METHOD_LOCK
+
+        :param remote_path: the path to remote resource to lock.
+        :param timeout: the timeout for the lock (default infinite).
+        :return: LockClient that wraps the Client and handle the lock
+        """
+        headers_ext = None
+        if timeout > 0:
+            headers_ext = [
+                "Timeout: Second-%d" % timeout
+            ]
+
+        response = self.execute_request(
+            action='lock', path=Urn(remote_path).quote(), headers_ext=headers_ext,
+            data="""<D:lockinfo xmlns:D='DAV:'><D:lockscope><D:exclusive/></D:lockscope><D:locktype><D:write/></D:locktype></D:lockinfo>""")
+
+        return LockClient(self, Urn(remote_path).quote(), response.headers["Lock-Token"])
+
     def resource(self, remote_path):
         urn = Urn(remote_path)
         return Resource(self, urn)
@@ -1251,3 +1277,27 @@ class WebDavXmlUtils:
             raise RemoteResourceNotFound(path)
         except etree.XMLSyntaxError:
             raise MethodNotSupported(name="is_dir", server=hostname)
+
+
+class LockClient(Client):
+    def __init__(self, client, lock_path, lock_token):
+        super().__init__([])
+        self.session = client.session
+        self.webdav = client.webdav
+        self.requests = client.requests
+        self.timeout = self.webdav.timeout
+
+        self.__lock_path = lock_path
+        self.__lock_token = lock_token
+
+    def get_headers(self, action, headers_ext=None):
+        headers = super().get_headers(action, headers_ext)
+        headers["Lock-Token"] = self.__lock_token
+        headers["If"] = "(%s)" % self.__lock_token
+        return headers
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.execute_request(action='unlock', path=self.__lock_path)

@@ -100,3 +100,11 @@ class NotEnoughSpace(WebDavException):
 
     def __str__(self):
         return self.message
+
+
+class ResourceLocked(WebDavException):
+    def __init__(self, path):
+        self.path = path
+
+    def __str__(self):
+        return "Resource {path} locked".format(path=self.path)
