@@ -193,7 +193,7 @@ class Client(object):
         :param urn: the URN to resource.
         :return: full path to resource with root path.
         """
-        return "{root}{path}".format(root=self.webdav.root, path=urn.path())
+        return "{root}{path}".format(root=unquote(self.webdav.root), path=urn.path())
 
     def execute_request(self, action, path, data=None, headers_ext=None):
         """Generate request to WebDAV server for specified action and path and execute it.
@@ -350,7 +350,9 @@ class Client(object):
         :param progress: Pass a callback function to view the file transmission progress.
                 The function must take *(current, total)* as positional arguments (look at Other Parameters below for a
                 detailed description) and will be called back each time a new file chunk has been successfully
-                transmitted. Example def progress_update(current, total, *args) ...
+                transmitted.
+                `total` will be None if missing the HTTP header 'content-type' in the response from the remote.
+                Example def progress_update(current, total, *args) ...
         :param progress_args: A tuple with extra custom arguments for the progress callback function.
                 You can pass anything you need to be available in the progress callback scope; for example, a Message
                 object or a Client instance in order to edit the message with the updated progress status.
@@ -363,7 +365,8 @@ class Client(object):
             raise RemoteResourceNotFound(urn.path())
 
         response = self.execute_request(action='download', path=urn.quote())
-        total = int(response.headers['content-length'])
+        clen_str = response.headers.get('content-length')
+        total = int(clen_str) if clen_str is not None else None
         current = 0
 
         if callable(progress):
@@ -438,7 +441,9 @@ class Client(object):
         :param progress: Pass a callback function to view the file transmission progress.
                 The function must take *(current, total)* as positional arguments (look at Other Parameters below for a
                 detailed description) and will be called back each time a new file chunk has been successfully
-                transmitted. Example def progress_update(current, total, *args) ...
+                transmitted.
+                `total` will be None if missing the HTTP header 'content-length' in the response from the remote.
+                 Example def progress_update(current, total, *args) ...
         :param progress_args: A tuple with extra custom arguments for the progress callback function.
                 You can pass anything you need to be available in the progress callback scope; for example, a Message
                 object or a Client instance in order to edit the message with the updated progress status.
@@ -455,7 +460,8 @@ class Client(object):
 
         with open(local_path, 'wb') as local_file:
             response = self.execute_request('download', urn.quote())
-            total = int(response.headers['content-length'])
+            clen_str=response.headers.get('content-length')
+            total = int(clen_str) if clen_str is not None else None
             current = 0
 
             if callable(progress):
