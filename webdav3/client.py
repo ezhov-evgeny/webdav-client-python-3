@@ -896,7 +896,7 @@ class Client(object):
                     continue
                 self.upload_file(remote_path=remote_path, local_path=local_path)
                 updated = True
-            return updated
+        return updated
 
     def pull(self, remote_directory, local_directory):
         def prune(src, exp):
