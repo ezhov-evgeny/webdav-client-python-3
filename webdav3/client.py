@@ -301,8 +301,6 @@ class Client(object):
             response = self.execute_request(action='check', path=urn.quote())
         except RemoteResourceNotFound:
             return False
-        except ResponseErrorCode:
-            return False
 
         if int(response.status_code) == 200:
             return True
