@@ -39,6 +39,7 @@ class ClientTestCase(BaseClientTestCase):
         self.assertTrue('etag' in list_info[0].keys(), 'info should contain etag')
         self.assertTrue('isdir' in list_info[0].keys(), 'info should contain isdir')
         self.assertTrue('path' in list_info[0].keys(), 'info should contain path')
+        self.assertTrue('content_type' in list_info[0].keys(), 'info should contain content_type')
 
     def test_free(self):
         if 'localhost' in self.options['webdav_hostname']:

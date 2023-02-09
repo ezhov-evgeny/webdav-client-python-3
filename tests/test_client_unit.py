@@ -34,6 +34,7 @@ class ClientTestCase(TestCase):
         self.assertEqual(result[0]['etag'], 'ab0b4b7973803c03639b848682b5f38c')
         self.assertEqual(result[0]['isdir'], False)
         self.assertEqual(result[0]['path'], '/test_dir/test.txt')
+        self.assertEqual(result[0]['content_type'], 'text/plain')
 
     def test_parse_get_list_response_empty(self):
         content = read_file_content('./tests/responses/get_list_empty.xml')
@@ -78,6 +79,7 @@ class ClientTestCase(TestCase):
         self.assertEqual(result['name'], 'test.txt')
         self.assertEqual(result['modified'], 'Wed, 18 Oct 2017 15:16:04 GMT')
         self.assertEqual(result['size'], '41')
+        self.assertEqual(result['content_type'], 'text/plain')
     
     def test_get_info_from_response(self):
         content = read_file_content('./tests/responses/get_info.xml')
@@ -87,6 +89,7 @@ class ClientTestCase(TestCase):
         self.assertEqual(result['name'], 'test.txt')
         self.assertEqual(result['modified'], 'Wed, 18 Oct 2017 15:16:04 GMT')
         self.assertEqual(result['size'], '41')
+        self.assertEqual(result['content_type'], 'text/plain')
 
     def test_create_get_property_request_content(self):
         option = {
@@ -188,7 +191,7 @@ class ClientTestCase(TestCase):
     def test_listdir_inner_dir(self):
         file_names = listdir('.')
         self.assertGreater(len(file_names), 0)
-        self.assertTrue('webdav3/' in file_names)
+        self.assertTrue('README.md' in file_names)
 
     def test_extract_response_for_path_not_supported(self):
         self.assertRaises(MethodNotSupported, Utils.extract_response_for_path, 'WrongXML', 'test', 'https://webdav.ru')
@@ -220,7 +223,6 @@ class ClientTestCase(TestCase):
         client.session.auth.return_value = True
         client.session.request.return_value.status_code = 200
         client.execute_request(action='list', path='')
-        client.session.request.assert_any_call(method="GET", url='http://localhost:8585', verify=True, timeout=30)
         client.session.request.assert_any_call(auth=None, cert=None, data=None, headers={'Accept': '*/*', 'Depth': '1'}, method='PROPFIND', stream=True, timeout=30, url='http://localhost:8585', verify=True)
 
     @patch('requests.Session')

@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 from setuptools.command.install import install as InstallCommand
 from setuptools.command.test import test as TestCommand
 
-version = "3.14.5"
+version = "3.14.6"
 requirements = "libxml2-dev libxslt-dev python-dev"
 
 
@@ -50,7 +50,7 @@ except TypeError:
 setup(
     name='webdavclient3',
     version=version,
-    packages=find_packages(),
+    packages=find_packages(exclude=('tests',)),
     requires=['python (>= 3.3.0)'],
     install_requires=['requests', 'lxml', 'python-dateutil'],
     scripts=['wdc'],
@@ -77,6 +77,7 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
         'Topic :: Internet',
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
