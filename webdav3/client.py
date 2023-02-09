@@ -1,3 +1,4 @@
+            #   Re-encoding with quote() would corrupt %20 into %2520.
 # -*- coding: utf-8
 
 import functools
@@ -758,8 +759,17 @@ class Client(object):
 
         :param remote_path: the remote resource whisch will be deleted.
         """
-        urn = Urn(remote_path)
-        self.execute_request(action='clean', path=urn.quote())
+        root = self.webdav.root
+        if (root is not None) and remote_path.startswith(root):
+            # It is a full path relative to hostname.
+            remote_path = remote_path[len(root):]
+            urn_quoted = remote_path
+            # ^ Assume full paths are from list() (already quoted).
+            #   Re-encoding with quote() would corrupt %20 into %2520.
+        else:
+            urn = Urn(remote_path)
+            urn_quoted = urn.quote()
+        return self.execute_request(action='clean', path=urn_quoted)
 
     @wrap_connection_error
     def info(self, remote_path):
