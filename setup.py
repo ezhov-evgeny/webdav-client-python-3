@@ -47,7 +47,7 @@ setup(
     version=version,
     packages=find_packages(),
     requires=['python (>= 2.7.6)'],
-    install_requires=['requests', 'lxml', 'argcomplete'],
+    install_requires=['requests', 'lxml', 'argcomplete', 'requests-kerberos'],
     scripts=['wdc'],
     tests_require=['pytest', 'pyhamcrest', 'junit-xml', 'pytest-allure-adaptor'],
     cmdclass={'install': Install, 'test': Test},

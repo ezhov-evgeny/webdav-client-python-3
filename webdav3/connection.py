@@ -22,7 +22,7 @@ class WebDAVSettings(ConnectionSettings):
     ns = "webdav:"
     prefix = "webdav_"
     keys = {'hostname', 'login', 'password', 'token', 'root', 'cert_path', 'key_path', 'recv_speed', 'send_speed',
-            'verbose'}
+            'verbose', 'enable_kerberos_auth'}
 
     hostname = None
     login = None
@@ -34,6 +34,7 @@ class WebDAVSettings(ConnectionSettings):
     recv_speed = None
     send_speed = None
     verbose = None
+    enable_kerberos_auth = False
 
     def __init__(self, options):
 
@@ -62,9 +63,6 @@ class WebDAVSettings(ConnectionSettings):
             raise OptionNotValid(name="cert_path", value=self.cert_path, ns=self.ns)
 
         if self.password and not self.login:
-            raise OptionNotValid(name="login", value=self.login, ns=self.ns)
-
-        if not self.token and not self.login:
             raise OptionNotValid(name="login", value=self.login, ns=self.ns)
 
 

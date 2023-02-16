@@ -10,6 +10,7 @@ from re import sub
 
 import lxml.etree as etree
 import requests
+from requests_kerberos import HTTPKerberosAuth
 
 from webdav3.connection import *
 from webdav3.exceptions import *
@@ -158,7 +159,7 @@ class Client(object):
         response = requests.request(
             method=Client.requests[action],
             url=self.get_url(path),
-            auth=(self.webdav.login, self.webdav.password),
+            auth=HTTPKerberosAuth() if self.enable_kerberos_auth else (self.webdav.login, self.webdav.password),
             headers=self.get_headers(action, headers_ext),
             timeout=self.timeout,
             data=data,
