@@ -109,8 +109,8 @@ options = {
  'webdav_hostname': "https://webdav.server.ru",
  'webdav_login':    "w_login",
  'webdav_password': "w_password",
- 'cert_path':       "/etc/ssl/certs/certificate.crt",
- 'key_path':        "/etc/ssl/private/certificate.key"
+ 'webdav_cert_path':       "/etc/ssl/certs/certificate.crt",
+ 'webdav_key_path':        "/etc/ssl/private/certificate.key"
 }
 client = Client(options)
 ```
@@ -120,16 +120,16 @@ Or you want to limit the speed or turn on verbose mode:
 ```python
 options = {
  ...
- 'recv_speed' : 3000000,
- 'send_speed' : 3000000,
- 'verbose'    : True
+ 'webdav_recv_speed' : 3000000,
+ 'webdav_send_speed' : 3000000,
+ 'webdav_verbose'    : True
 }
 client = Client(options)
 ```
 
-recv_speed: rate limit data download speed in Bytes per second. Defaults to unlimited speed.  
-send_speed: rate limit data upload speed in Bytes per second. Defaults to unlimited speed.  
-verbose:    set verbose mode on/off. By default verbose mode is off.
+webdav_recv_speed: rate limit data download speed in Bytes per second. Defaults to unlimited speed.  
+webdav_send_speed: rate limit data upload speed in Bytes per second. Defaults to unlimited speed.  
+webdav_verbose:    set verbose mode on/off. By default verbose mode is off.
 
 Also if your server does not support `check` it is possible to disable it:
 
