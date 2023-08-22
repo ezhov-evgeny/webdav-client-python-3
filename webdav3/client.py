@@ -1164,17 +1164,19 @@ class WebDavXmlUtils:
                  `etag`: etag of resource,
                  `content_type`: content type of resource.
         """
-        find_attributes = {
-            'created': ".//{DAV:}creationdate",
-            'name': ".//{DAV:}displayname",
-            'size': ".//{DAV:}getcontentlength",
-            'modified': ".//{DAV:}getlastmodified",
-            'etag': ".//{DAV:}getetag",
-            'content_type': ".//{DAV:}getcontenttype",
-        }
+        find_attributes = (
+            ('created', ".//{DAV:}creationdate"),
+            ('name', ".//{DAV:}displayname"),
+            ("name", ".//{DAV:}displayName"),
+            ('size', ".//{DAV:}getcontentlength"),
+            ('modified', ".//{DAV:}getlastmodified"),
+            ('etag', ".//{DAV:}getetag"),
+            ('content_type', ".//{DAV:}getcontenttype"),
+        )
         info = dict()
-        for (name, value) in find_attributes.items():
-            info[name] = response.findtext(value)
+        for (name, value) in find_attributes:
+            if name not in info or not info[name]:
+                info[name] = response.findtext(value)
         return info
 
     @staticmethod
