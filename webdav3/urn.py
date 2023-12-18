@@ -8,7 +8,7 @@ class Urn(object):
     def __init__(self, path, directory=False):
 
         self._path = quote(path)
-        expressions = "/\.+/", "/+"
+        expressions = r"/\.+/", "/+"
         for expression in expressions:
             self._path = sub(expression, Urn.separate, self._path)
 
