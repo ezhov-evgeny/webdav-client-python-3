@@ -10,7 +10,7 @@ It provides easy way to work with WebDAV-servers.
 
 Installation
 ------------
-```bash
+```console
 $ pip install webdavclient3
 ```
 
@@ -38,7 +38,7 @@ Webdav API is a set of webdav actions of work with cloud storage. This set inclu
 
 **Configuring the client**
 
-Required key is host name or IP address of the WevDAV-server with param name `webdav_hostname`.  
+Required key is host name or IP address of the WebDAV-server with param name `webdav_hostname`.  
 For authentication in WebDAV server use `webdav_login`, `webdav_password`.  
 For an anonymous login do not specify auth properties.
 
