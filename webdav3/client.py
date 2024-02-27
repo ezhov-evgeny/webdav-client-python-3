@@ -302,12 +302,20 @@ class Client(object):
 
         urn = Urn(remote_path)
         try:
-            response = self.execute_request(action='check', path=urn.quote())
+            headers_ext = []
+            if self.requests.get('check') == 'PROPFIND':
+                headers_ext = ["Depth: 0"]
+            response = self.execute_request(action='check', path=urn.quote(), headers_ext=headers_ext)
         except RemoteResourceNotFound:
             return False
 
         if int(response.status_code) == 200:
             return True
+        
+        if self.requests.get('check') == 'PROPFIND':
+            if int(response.status_code) == 207 and response.content:
+                return True
+        
         return False
 
     @wrap_connection_error
