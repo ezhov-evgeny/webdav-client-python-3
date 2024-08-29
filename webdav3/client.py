@@ -212,8 +212,7 @@ class Client(object):
             method=self.requests[action],
             url=self.get_url(path),
             auth=(self.webdav.login, self.webdav.password) if (not self.webdav.token and not self.session.auth)
-                                                              and (
-                                                                          self.webdav.login and self.webdav.password) else None,
+                                                              and self.webdav.login else None,
             headers=self.get_headers(action, headers_ext),
             timeout=self.timeout,
             cert=(self.webdav.cert_path, self.webdav.key_path) if (
