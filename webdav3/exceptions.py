@@ -13,8 +13,9 @@ class OptionNotValid(NotValid):
         self.ns = ns
 
     def __str__(self):
-        return "Option ({ns}{name}={value}) have invalid name or value".format(ns=self.ns, name=self.name,
-                                                                               value=self.value)
+        return "Option ({ns}{name}={value}) have invalid name or value".format(
+            ns=self.ns, name=self.name, value=self.value
+        )
 
 
 class CertificateNotValid(NotValid):
@@ -55,7 +56,9 @@ class MethodNotSupported(WebDavException):
         self.server = server
 
     def __str__(self):
-        return "Method '{name}' not supported for {server}".format(name=self.name, server=self.server)
+        return "Method '{name}' not supported for {server}".format(
+            name=self.name, server=self.server
+        )
 
 
 class ConnectionException(WebDavException):
@@ -90,8 +93,9 @@ class ResponseErrorCode(WebDavException):
         self.message = message
 
     def __str__(self):
-        return "Request to {url} failed with code {code} and message: {message}".format(url=self.url, code=self.code,
-                                                                                        message=self.message)
+        return "Request to {url} failed with code {code} and message: {message}".format(
+            url=self.url, code=self.code, message=self.message
+        )
 
 
 class NotEnoughSpace(WebDavException):
