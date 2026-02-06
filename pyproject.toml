@@ -1,0 +1,51 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "webdavclient3"
+version = "3.14.6"
+description = "WebDAV client, based on original package https://github.com/designerror/webdav-client-python but uses requests instead of PyCURL"
+readme = "README.md"
+license = { text = "MIT License" }
+authors = [
+    { name = "Evgeny Ezhov", email = "ezhov.evgeny@gmail.com" }
+]
+keywords = [
+    "webdav", "client", "python", "module", "library", "packet",
+    "Yandex.Disk", "Dropbox", "Google Disk", "Box", "4shared"
+]
+classifiers = [
+    "Environment :: Console",
+    "Environment :: Web Environment",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft",
+    "Operating System :: Unix",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Internet",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+requires-python = ">=3.6"
+dependencies = [
+    "requests",
+    "lxml",
+    "python-dateutil",
+]
+
+[project.optional-dependencies]
+test = ["pytest", "coverage"]
+dev = ["pytest", "coverage", "ruff"]
+
+[project.urls]
+Homepage = "https://github.com/ezhov-evgeny/webdav-client-python-3"
+Repository = "https://github.com/ezhov-evgeny/webdav-client-python-3"
+
+[tool.setuptools.packages.find]
+exclude = ["tests*"]
