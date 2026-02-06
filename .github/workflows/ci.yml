@@ -26,12 +26,55 @@ jobs:
       - name: Ruff format check
         run: ruff format --check webdav3/ tests/
 
-  test:
-    runs-on: ubuntu-latest
+  test-legacy:
+    name: test (legacy)
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.7"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          pip install -e ".[test]"
+
+      - name: Start WebDAV container
+        run: |
+          docker run -d --name webdav \
+            -e AUTH_TYPE=Basic -e USERNAME=alice -e PASSWORD=secret1234 \
+            -v ${{ github.workspace }}/conf:/usr/local/apache2/conf \
+            -p 8585:80 \
+            bytemark/webdav
+          docker ps -a
+          sleep 3
+          docker logs --tail 20 webdav
+
+      - name: Run tests with coverage
+        run: |
+          coverage run -m pytest tests/ -v
+          coverage xml
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.python-version }}
+          path: coverage.xml
+
+  test:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
 
     steps:
       - uses: actions/checkout@v4
