@@ -32,11 +32,20 @@ jobs:
           echo "version=$V" >> "$GITHUB_OUTPUT"
 
       - name: Create and push tag
+        id: tag
         run: |
           TAG="v${{ steps.version.outputs.version }}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git tag "$TAG"
           git push origin "$TAG"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Tag push from a workflow does not trigger other workflows (GitHub limitation).
+      # Trigger Publish to PyPI explicitly.
+      - name: Trigger Publish workflow
+        run: gh workflow run publish.yml --ref "${{ steps.tag.outputs.tag }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
