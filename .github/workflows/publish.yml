@@ -7,6 +7,8 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    # Manual run: use "Run workflow" and set ref to tag (e.g. v3.14.7) to publish that version.
 
 jobs:
   publish:
