@@ -7,7 +7,7 @@ name = "webdavclient3"
 version = "3.14.7"
 description = "WebDAV client, based on original package https://github.com/designerror/webdav-client-python but uses requests instead of PyCURL"
 readme = "README.md"
-license = "MIT"
+license = { text = "MIT" }
 authors = [
     { name = "Evgeny Ezhov", email = "ezhov.evgeny@gmail.com" }
 ]
