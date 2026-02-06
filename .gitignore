@@ -9,3 +9,7 @@
 venv/
 .idea/
 build
+/aarontest
+coverage.xml
+htmlcov/
+.coverage

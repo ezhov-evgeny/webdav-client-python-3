@@ -1,0 +1,52 @@
+# When a branch named release/X.Y.Z is pushed, set version = "X.Y.Z" in pyproject.toml and commit.
+# Branch name must match release/X.Y.Z (e.g. release/3.14.7). Creates one commit if version changed.
+
+name: Release version bump
+
+on:
+  push:
+    branches:
+      - "release/*"
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # push commit to release branch
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.ref }}
+
+      - name: Get version from branch name
+        id: version
+        run: |
+          BRANCH="${{ github.ref_name }}"
+          if [[ "$BRANCH" =~ ^release/(.+)$ ]]; then
+            echo "version=${BASH_REMATCH[1]}" >> "$GITHUB_OUTPUT"
+          else
+            echo "Branch name must be release/X.Y.Z"
+            exit 1
+          fi
+
+      - name: Update version in pyproject.toml
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          sed -i 's/^version = ".*"/version = "'"$VERSION"'"/' pyproject.toml
+          grep -q '^version = "'"$VERSION"'"' pyproject.toml || (echo "Failed to update pyproject.toml"; exit 1)
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet pyproject.toml; then
+            echo "Version already set, nothing to commit"
+            exit 0
+          fi
+          git add pyproject.toml
+          git commit -m "chore: set version to ${{ steps.version.outputs.version }} [skip ci]"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

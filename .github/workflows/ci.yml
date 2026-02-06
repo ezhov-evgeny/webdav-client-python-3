@@ -1,0 +1,139 @@
+name: WebDAV client Python 3 CI
+
+on:
+  push:
+    branches: [develop, master]
+  pull_request:
+    branches: [develop, master]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Ruff
+        run: pip install ruff
+
+      - name: Ruff check
+        run: ruff check webdav3/ tests/
+
+      - name: Ruff format check
+        run: ruff format --check webdav3/ tests/
+
+  test-legacy:
+    name: test (legacy)
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.7"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          pip install -e ".[test]"
+
+      - name: Start WebDAV container
+        run: |
+          docker run -d --name webdav \
+            -e AUTH_TYPE=Basic -e USERNAME=alice -e PASSWORD=secret1234 \
+            -v ${{ github.workspace }}/conf:/usr/local/apache2/conf \
+            -p 8585:80 \
+            bytemark/webdav
+          docker ps -a
+          sleep 3
+          docker logs --tail 20 webdav
+
+      - name: Run tests with coverage
+        run: |
+          coverage run -m pytest tests/ -v
+          coverage xml
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.python-version }}
+          path: coverage.xml
+
+  test:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          pip install -e ".[test]"
+
+      - name: Start WebDAV container
+        run: |
+          docker run -d --name webdav \
+            -e AUTH_TYPE=Basic -e USERNAME=alice -e PASSWORD=secret1234 \
+            -v ${{ github.workspace }}/conf:/usr/local/apache2/conf \
+            -p 8585:80 \
+            bytemark/webdav
+          docker ps -a
+          sleep 3
+          docker logs --tail 20 webdav
+
+      - name: Run tests with coverage
+        run: |
+          coverage run -m pytest tests/ -v
+          coverage xml
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.python-version }}
+          path: coverage.xml
+
+      - name: Add coverage to Job Summary
+        if: matrix.python-version == '3.12'
+        run: |
+          echo "## Coverage report (Python ${{ matrix.python-version }})" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          coverage report >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Coverage summary (markdown table)
+        if: matrix.python-version == '3.12'
+        uses: irongut/CodeCoverageSummary@v1.3.0
+        with:
+          filename: coverage.xml
+          format: markdown
+          output: both
+          badge: true
+
+      - name: Upload coverage to Codecov
+        if: matrix.python-version == '3.12'
+        uses: codecov/codecov-action@v5
+        with:
+          files: coverage.xml
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

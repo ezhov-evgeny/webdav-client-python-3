@@ -7,9 +7,9 @@ from webdav3.connection import WebDAVSettings, OptionNotValid, ConnectionSetting
 class ConnectionTestCase(unittest.TestCase):
     def test_connection_settings_valid(self):
         options = {
-            'webdav_hostname': 'http://localhost:8585',
-            'webdav_login': 'alice',
-            'webdav_password': 'secret1234'
+            "webdav_hostname": "http://localhost:8585",
+            "webdav_login": "alice",
+            "webdav_password": "secret1234",
         }
         webdav_options = get_options(option_type=WebDAVSettings, from_options=options)
         settings = WebDAVSettings(webdav_options)
@@ -18,10 +18,10 @@ class ConnectionTestCase(unittest.TestCase):
 
     def test_connection_settings_timeout_set(self):
         options = {
-            'webdav_hostname': 'http://localhost:8585',
-            'webdav_login': 'alice',
-            'webdav_password': 'secret1234',
-            'timeout': 60
+            "webdav_hostname": "http://localhost:8585",
+            "webdav_login": "alice",
+            "webdav_password": "secret1234",
+            "timeout": 60,
         }
         webdav_options = get_options(option_type=WebDAVSettings, from_options=options)
         settings = WebDAVSettings(webdav_options)
@@ -29,19 +29,16 @@ class ConnectionTestCase(unittest.TestCase):
 
     def test_connection_settings_timeout_default(self):
         options = {
-            'webdav_hostname': 'http://localhost:8585',
-            'webdav_login': 'alice',
-            'webdav_password': 'secret1234'
+            "webdav_hostname": "http://localhost:8585",
+            "webdav_login": "alice",
+            "webdav_password": "secret1234",
         }
         webdav_options = get_options(option_type=WebDAVSettings, from_options=options)
         settings = WebDAVSettings(webdav_options)
         self.assertEqual(30, settings.timeout)
 
     def test_connection_settings_no_hostname(self):
-        options = {
-            'webdav_login': 'alice',
-            'webdav_password': 'secret1234'
-        }
+        options = {"webdav_login": "alice", "webdav_password": "secret1234"}
         webdav_options = get_options(option_type=WebDAVSettings, from_options=options)
         settings = WebDAVSettings(webdav_options)
         self.assertRaises(OptionNotValid, settings.is_valid)
@@ -49,8 +46,8 @@ class ConnectionTestCase(unittest.TestCase):
 
     def test_connection_settings_no_login(self):
         options = {
-            'webdav_hostname': 'http://localhost:8585',
-            'webdav_password': 'secret1234'
+            "webdav_hostname": "http://localhost:8585",
+            "webdav_password": "secret1234",
         }
         webdav_options = get_options(option_type=WebDAVSettings, from_options=options)
         settings = WebDAVSettings(webdav_options)
@@ -58,19 +55,17 @@ class ConnectionTestCase(unittest.TestCase):
         self.assertFalse(settings.valid())
 
     def test_connection_settings_anonymous_login(self):
-        options = {
-            'webdav_hostname': 'http://localhost:8585'
-        }
+        options = {"webdav_hostname": "http://localhost:8585"}
         webdav_options = get_options(option_type=WebDAVSettings, from_options=options)
         settings = WebDAVSettings(webdav_options)
         self.assertTrue(settings.valid())
 
     def test_connection_settings_wrong_cert_path(self):
         options = {
-            'webdav_hostname': 'http://localhost:8585',
-            'webdav_login': 'alice',
-            'cert_path': './wrong.file',
-            'webdav_password': 'secret1234'
+            "webdav_hostname": "http://localhost:8585",
+            "webdav_login": "alice",
+            "cert_path": "./wrong.file",
+            "webdav_password": "secret1234",
         }
         webdav_options = get_options(option_type=WebDAVSettings, from_options=options)
         settings = WebDAVSettings(webdav_options)
@@ -79,10 +74,10 @@ class ConnectionTestCase(unittest.TestCase):
 
     def test_connection_settings_wrong_key_path(self):
         options = {
-            'webdav_hostname': 'http://localhost:8585',
-            'webdav_login': 'alice',
-            'key_path': './wrong.file',
-            'webdav_password': 'secret1234'
+            "webdav_hostname": "http://localhost:8585",
+            "webdav_login": "alice",
+            "key_path": "./wrong.file",
+            "webdav_password": "secret1234",
         }
         webdav_options = get_options(option_type=WebDAVSettings, from_options=options)
         settings = WebDAVSettings(webdav_options)
@@ -91,10 +86,10 @@ class ConnectionTestCase(unittest.TestCase):
 
     def test_connection_settings_with_key_path_an_no_cert_path(self):
         options = {
-            'webdav_hostname': 'http://localhost:8585',
-            'webdav_login': 'alice',
-            'key_path': './publish.sh',
-            'webdav_password': 'secret1234'
+            "webdav_hostname": "http://localhost:8585",
+            "webdav_login": "alice",
+            "key_path": "./publish.sh",
+            "webdav_password": "secret1234",
         }
         webdav_options = get_options(option_type=WebDAVSettings, from_options=options)
         settings = WebDAVSettings(webdav_options)
@@ -107,5 +102,5 @@ class ConnectionTestCase(unittest.TestCase):
         self.assertTrue(settings.valid())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
