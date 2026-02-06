@@ -1,5 +1,16 @@
 Release Notes
 -------------
+**Version 3.14.7**
+
+* WebDAV lock support by https://github.com/bboehmke
+* Recursive `mkdir`, recursive `list`, and `upload_file` with `force` option (create directory if missing) by https://github.com/adclose
+* Fixed missing `progress` parameter in upload function by https://github.com/guiphil
+* Fixed `webdav.root` in `get_full_path()` — root is now unquoted consistently with path handling in `urn` by https://github.com/xmaples
+* Fixed `KeyError` when HTTP response is missing `Content-Length` header by https://github.com/xmaples
+* Fixed indentation in client response handling (#89) by https://github.com/yeus
+* Do not catch `ResponseErrorCode` so server errors propagate to callers by https://github.com/james-pcdr
+* CI/CD: migrated to GitHub Actions (#134); added `requirements.txt` and `pyproject.toml`; linter fixes; coverage reporting; use Ubuntu 22.04 for legacy Python 3.7 tests by https://github.com/ezhov-evgeny
+
 **Version 3.14.6**
 
 * Configuring of content downloading chunk size by https://github.com/nuwang
