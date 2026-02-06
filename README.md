@@ -353,6 +353,6 @@ Please use this check list before creating PR:
 
 ### Releasing
 
-Releases follow a git-flow style: create branch `release/X.Y.Z` from `develop`, update version in `setup.py`, merge into `master`, then create and push tag `vX.Y.Z`. GitHub Actions publishes to PyPI on tag push.
+Releases follow a git-flow style: create branch `release/X.Y.Z` from `develop`, update version in `pyproject.toml`, merge into `master`, then create and push tag `vX.Y.Z`. GitHub Actions publishes to PyPI on tag push.
 
 **Required:** In the repository **Settings → Secrets and variables → Actions**, add a secret `PYPI_API_TOKEN` with a PyPI API token (create at [pypi.org/manage/account/token/](https://pypi.org/manage/account/token/)). Alternatively, configure [Trusted Publishing](https://docs.pypi.org/trusted-publishers/) on PyPI and remove the `password` input from `.github/workflows/publish.yml`.

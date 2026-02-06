@@ -9,7 +9,7 @@ Release Notes
 * Fixed `KeyError` when HTTP response is missing `Content-Length` header by https://github.com/xmaples
 * Fixed indentation in client response handling (#89) by https://github.com/yeus
 * Do not catch `ResponseErrorCode` so server errors propagate to callers by https://github.com/james-pcdr
-* CI/CD: migrated to GitHub Actions (#134); added `requirements.txt` and `pyproject.toml`; linter fixes; coverage reporting; use Ubuntu 22.04 for legacy Python 3.7 tests by https://github.com/ezhov-evgeny
+* CI/CD: migrated to GitHub Actions (#134) by https://github.com/ezhov-evgeny
 
 **Version 3.14.6**
 

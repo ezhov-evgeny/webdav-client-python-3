@@ -21,12 +21,12 @@ jobs:
           ref: ${{ github.event.pull_request.merge_commit_sha }}
           fetch-depth: 0
 
-      - name: Get version from setup.py
+      - name: Get version from pyproject.toml
         id: version
         run: |
-          V=$(grep -E '^version\s*=\s*"' setup.py | sed -n 's/.*"\([^"]*\)".*/\1/p')
+          V=$(grep -E '^version\s*=\s*"' pyproject.toml | sed -n 's/.*"\([^"]*\)".*/\1/p')
           if [[ -z "$V" ]]; then
-            echo "Could not read version from setup.py"
+            echo "Could not read version from pyproject.toml"
             exit 1
           fi
           echo "version=$V" >> "$GITHUB_OUTPUT"
