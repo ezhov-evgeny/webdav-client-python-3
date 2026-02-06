@@ -1,6 +1,6 @@
 from os.path import exists
 
-from webdav3.exceptions import *
+from webdav3.exceptions import OptionNotValid
 from webdav3.urn import Urn
 
 
@@ -24,8 +24,22 @@ class ConnectionSettings:
 class WebDAVSettings(ConnectionSettings):
     ns = "webdav:"
     prefix = "webdav_"
-    keys = {'hostname', 'login', 'password', 'token', 'root', 'cert_path', 'key_path', 'recv_speed', 'send_speed',
-            'verbose', 'disable_check', 'override_methods', 'timeout', 'chunk_size'}
+    keys = {
+        "hostname",
+        "login",
+        "password",
+        "token",
+        "root",
+        "cert_path",
+        "key_path",
+        "recv_speed",
+        "send_speed",
+        "verbose",
+        "disable_check",
+        "override_methods",
+        "timeout",
+        "chunk_size",
+    }
 
     def __init__(self, options):
         self.hostname = None
@@ -46,12 +60,12 @@ class WebDAVSettings(ConnectionSettings):
         self.options = dict()
 
         for key in self.keys:
-            value = options.get(key, '')
+            value = options.get(key, "")
             if not (self.__dict__[key] and not value):
                 self.options[key] = value
                 self.__dict__[key] = value
 
-        self.root = Urn(self.root).quote() if self.root else ''
+        self.root = Urn(self.root).quote() if self.root else ""
         self.root = self.root.rstrip(Urn.separate)
         self.hostname = self.hostname.rstrip(Urn.separate)
 

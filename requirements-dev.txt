@@ -1,0 +1,5 @@
+# Development and test dependencies (see pyproject.toml [project.optional-dependencies.dev])
+-r requirements.txt
+pytest
+coverage
+ruff
