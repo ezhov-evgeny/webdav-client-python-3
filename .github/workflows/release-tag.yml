@@ -1,0 +1,42 @@
+# When a PR from release/X.Y.Z to master is merged, create tag vX.Y.Z on the merge commit and push.
+# That tag triggers the Publish workflow (publish.yml).
+
+name: Release tag
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [master, main]
+
+jobs:
+  tag:
+    if: github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'release/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # push tag
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          fetch-depth: 0
+
+      - name: Get version from setup.py
+        id: version
+        run: |
+          V=$(grep -E '^version\s*=\s*"' setup.py | sed -n 's/.*"\([^"]*\)".*/\1/p')
+          if [[ -z "$V" ]]; then
+            echo "Could not read version from setup.py"
+            exit 1
+          fi
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+
+      - name: Create and push tag
+        run: |
+          TAG="v${{ steps.version.outputs.version }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "$TAG"
+          git push origin "$TAG"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

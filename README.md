@@ -1,8 +1,7 @@
 Python WebDAV Client 3
 =========
-[![Build Status](https://travis-ci.com/ezhov-evgeny/webdav-client-python-3.svg?branch=develop)](https://travis-ci.com/ezhov-evgeny/webdav-client-python-3)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=ezhov-evgeny_webdav-client-python-3&metric=alert_status)](https://sonarcloud.io/dashboard?id=ezhov-evgeny_webdav-client-python-3)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=ezhov-evgeny_webdav-client-python-3&metric=coverage)](https://sonarcloud.io/dashboard?id=ezhov-evgeny_webdav-client-python-3)
+[![CI](https://github.com/ezhov-evgeny/webdav-client-python-3/actions/workflows/ci.yml/badge.svg)](https://github.com/ezhov-evgeny/webdav-client-python-3/actions/workflows/ci.yml)
+[![Coverage](https://img.shields.io/badge/Coverage-report-informational?logo=githubactions)](https://github.com/ezhov-evgeny/webdav-client-python-3/actions/workflows/ci.yml)
 [![PyPI](https://img.shields.io/pypi/v/webdavclient3)](https://pypi.org/project/webdavclient3/) ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/webdavclient3)  
 
 Package webdavclient3 based on https://github.com/designerror/webdav-client-python but uses `requests` instead of `PyCURL`.
@@ -327,7 +326,7 @@ res1.write_async(local_path="~/Downloads/file1", callback)
 
 ### Prepare development environment
 1. Install docker on your development machine
-1. Start WebDAV server for testing by following commands from the project's root folder or change path to `conf` dir in second command to correct:
+2. Start WebDAV server for testing by following commands from the project's root folder or change path to `conf` dir in second command to correct:
 ```shell script
 docker pull bytemark/webdav
 docker run -d --name webdav -e AUTH_TYPE=Basic -e USERNAME=alice -e PASSWORD=secret1234 -v conf:/usr/local/apache2/conf -p 8585:80 bytemark/webdav
@@ -339,7 +338,7 @@ Please check your code according PEP8 Style guides.
 
 ### Run tests
 1. Check that webdav container is started on your local machine
-1. Execute following command in the project's root folder:
+2. Execute following command in the project's root folder:
 ```shell script
 python -m unittest discover -s tests
 ```
@@ -348,6 +347,12 @@ python -m unittest discover -s tests
 
 Please use this check list before creating PR:
 1. You code should be formatted according PEP8
-1. All tests should successfully pass
-1. Your changes shouldn't change previous default behaviour, exclude defects
-1. All changes are covered by tests 
+2. All tests should successfully pass
+3. Your changes shouldn't change previous default behaviour, exclude defects
+4. All changes are covered by tests
+
+### Releasing
+
+Releases follow a git-flow style: create branch `release/X.Y.Z` from `develop`, update version in `setup.py`, merge into `master`, then create and push tag `vX.Y.Z`. GitHub Actions publishes to PyPI on tag push.
+
+**Required:** In the repository **Settings → Secrets and variables → Actions**, add a secret `PYPI_API_TOKEN` with a PyPI API token (create at [pypi.org/manage/account/token/](https://pypi.org/manage/account/token/)). Alternatively, configure [Trusted Publishing](https://docs.pypi.org/trusted-publishers/) on PyPI and remove the `password` input from `.github/workflows/publish.yml`.
