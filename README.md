@@ -1,7 +1,7 @@
 Python WebDAV Client 3
 =========
 [![CI](https://github.com/ezhov-evgeny/webdav-client-python-3/actions/workflows/ci.yml/badge.svg)](https://github.com/ezhov-evgeny/webdav-client-python-3/actions/workflows/ci.yml)
-[![Coverage](https://img.shields.io/badge/Coverage-report-informational?logo=githubactions)](https://github.com/ezhov-evgeny/webdav-client-python-3/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/ezhov-evgeny/webdav-client-python-3/graph/badge.svg)](https://codecov.io/gh/ezhov-evgeny/webdav-client-python-3)
 [![PyPI](https://img.shields.io/pypi/v/webdavclient3)](https://pypi.org/project/webdavclient3/) ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/webdavclient3)  
 
 Package webdavclient3 based on https://github.com/designerror/webdav-client-python but uses `requests` instead of `PyCURL`.
