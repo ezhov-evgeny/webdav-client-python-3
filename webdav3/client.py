@@ -179,7 +179,7 @@ class Client(object):
         """Returns HTTP headers of specified WebDAV actions.
 
         :param action: the identifier of action.
-        :param headers_ext: (optional) the addition headers list witch sgould be added to basic HTTP headers for
+        :param headers_ext: (optional) the addition headers list witch should be added to basic HTTP headers for
                             the specified action.
         :return: the dictionary of headers for specified action.
         """
