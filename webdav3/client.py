@@ -345,7 +345,8 @@ class Client(object):
         except RemoteResourceNotFound:
             return False
 
-        if int(response.status_code) == 200:
+        # Some WebDAV servers respond with status codes other than 200, such as 207
+        if 200 <= response.status_code < 300:
             return True
         return False
 
