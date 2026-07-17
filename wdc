@@ -12,7 +12,15 @@ import struct
 import subprocess
 import sys
 from base64 import b64decode, b64encode
-from distutils.util import strtobool
+def _strtobool(val):
+    """Convert a string to boolean, like distutils.util.strtobool."""
+    val = val.lower()
+    if val in ('y', 'yes', 't', 'true', 'on', '1'):
+        return 1
+    elif val in ('n', 'no', 'f', 'false', 'off', '0'):
+        return 0
+    else:
+        raise ValueError(f"invalid truth value {val!r}")
 
 import argcomplete
 
@@ -44,7 +52,7 @@ def _get_terminal_size_windows():
             sizex = right - left + 1
             sizey = bottom - top + 1
         return sizex, sizey
-    except:
+    except Exception:
         pass
 
 
@@ -53,7 +61,7 @@ def _get_terminal_size_input():
         cols = int(subprocess.check_call(shlex.split('tput cols')))
         rows = int(subprocess.check_call(shlex.split('tput lines')))
         return (cols, rows)
-    except:
+    except Exception:
         pass
 
 
@@ -64,7 +72,7 @@ def _get_terminal_size_linux():
             import fcntl
             import termios
             return struct.unpack('hh', fcntl.ioctl(fd, termios.TIOCGWINSZ, '1234'))
-        except:
+        except Exception:
             pass
     cr = ioctl_GWINSZ(0) or ioctl_GWINSZ(1) or ioctl_GWINSZ(2)
     if not cr:
@@ -72,12 +80,12 @@ def _get_terminal_size_linux():
             fd = os.open(os.ctermid(), os.O_RDONLY)
             cr = ioctl_GWINSZ(fd)
             os.close(fd)
-        except:
+        except Exception:
             pass
     if not cr:
         try:
             cr = (os.environ['LINES'], os.environ['COLUMNS'])
-        except:
+        except Exception:
             return None
     return int(cr[1]), int(cr[0])
 
@@ -506,7 +514,7 @@ if __name__ == "__main__":
                         except NameError:
                             choice = input("Local path exists, do you want to overwrite it? [Y/n] ")
                         try:
-                            yes = strtobool(choice.lower())
+                            yes = _strtobool(choice.lower())
                             if yes:
                                 client.download(remote_path=args.path, local_path=args.to_path, progress=download_progress)
                                 print("\n")
@@ -539,7 +547,7 @@ if __name__ == "__main__":
                         except NameError:
                             choice = input("Remote resource exists, do you want to overwrite it? [Y/n] ")
                         try:
-                            yes = strtobool(choice.lower())
+                            yes = _strtobool(choice.lower())
                             if yes:
                                 client.upload(remote_path=args.path, local_path=args.from_path, progress=upload_progress)
                                 print("\n")
