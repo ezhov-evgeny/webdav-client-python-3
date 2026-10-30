@@ -36,9 +36,11 @@ dependencies = [
     "requests",
     "lxml",
     "python-dateutil",
+    "importlib-metadata; python_version < '3.8'",
 ]
 
 [project.optional-dependencies]
+cli = ["argcomplete"]
 test = ["pytest", "coverage"]
 dev = ["pytest", "coverage", "ruff"]
 

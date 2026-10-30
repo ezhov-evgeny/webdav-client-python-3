@@ -12,11 +12,29 @@ import struct
 import subprocess
 import sys
 from base64 import b64decode, b64encode
-from distutils.util import strtobool
 
-import argcomplete
+try:
+    from importlib.metadata import version as distribution_version
+except ImportError:
+    from importlib_metadata import version as distribution_version
 
-from webdav3.client import Client, WebDavException, NotConnection, Urn
+try:
+    import argcomplete
+except ImportError:
+    argcomplete = None
+
+from webdav3.client import Client
+from webdav3.exceptions import WebDavException, NotConnection
+from webdav3.urn import Urn
+
+
+def strtobool(value):
+    value = value.lower()
+    if value in ('y', 'yes', 't', 'true', 'on', '1'):
+        return 1
+    if value in ('n', 'no', 'f', 'false', 'off', '0'):
+        return 0
+    raise ValueError('invalid truth value %r' % value)
 
 
 def get_terminal_size():
@@ -306,7 +324,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog='wdc', formatter_class=Formatter, epilog=epilog, usage=usage)
     parser.add_argument("action", help=actions_help, choices=actions)
 
-    from webdav3.client import __version__ as version
+    version = distribution_version('webdavclient3')
     version_text = "{name} {version}".format(name="%(prog)s", version=version)
     parser.add_argument("-v", '--version', action='version', version=version_text)
     parser.add_argument("-r", "--root", help="example: dir1/dir2")
@@ -318,7 +336,8 @@ if __name__ == "__main__":
     parser.add_argument("-f", '--from-path', help="example: ~/Documents/file1")
     parser.add_argument("-t", "--to-path", help="example for download and pull: ~/Download/file1\nexample for copy and move: dir1/dir2").completer = urn_completer
 
-    argcomplete.autocomplete(parser, exclude=("-h", "--help", "--proxy", "-p", "-r", "--root", "-c", "--cert-path", "-t", "--to-path", "-v", "--version", "-f", "--from-path", "-k", "--key-path"))
+    if argcomplete is not None:
+        argcomplete.autocomplete(parser, exclude=("-h", "--help", "--proxy", "-p", "-r", "--root", "-c", "--cert-path", "-t", "--to-path", "-v", "--version", "-f", "--from-path", "-k", "--key-path"))
     args = parser.parse_args()
     action = args.action
 

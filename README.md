@@ -322,6 +322,11 @@ res1.write(local_path="~/Downloads/file1")
 res1.write_async(local_path="~/Downloads/file1", callback)
 ```
 
+## Command-line client
+
+The package installs the `wdc` command. Run `wdc --help` to see its options.
+Shell completion is optional; install it with `pip install 'webdavclient3[cli]'`.
+
 # For Contributors
 
 ### Prepare development environment
