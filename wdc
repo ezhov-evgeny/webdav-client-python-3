@@ -12,12 +12,18 @@ import struct
 import subprocess
 import sys
 from base64 import b64decode, b64encode
-from distutils.util import strtobool
 
 import argcomplete
 
 from webdav3.client import Client, WebDavException, NotConnection, Urn
 
+def strtobool(val: str) -> bool:
+    val = val.lower()
+    if val in ('y', 'yes', 't', 'true', 'on', '1'):
+        return True
+    if val in ('n', 'no', 'f', 'false', 'off', '0'):
+        return False
+    raise ValueError(f"Invalid truth value {val!r}")
 
 def get_terminal_size():
     current_os = platform.system()
